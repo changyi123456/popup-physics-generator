@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "failures": [],
+  "checks": 2416,
+  "peakEmf": 5.4286721054031615,
+  "frequency": 1.9999999999999998,
+  "scope": "uniform field, resistive circuit, Faraday derivative, signed motion, energy balance; not manufacturing geometry"
+}

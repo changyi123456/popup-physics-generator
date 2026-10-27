@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eae4d0">
+  <meta name="description" content="手繪立體物理課本。親手搖動交流發電機，觀察磁通量、感應電壓、交流波形與能量轉換。">
+  <title>物理之書 — 手搖交流發電機</title>
+  <style>/* APP_CSS */</style>
+</head>
+<body>
+  <svg class="icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <filter id="pen-stroke" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="8" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="0.45" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 4c4-1 6 0 9 2 3-2 5-3 9-2v15c-4-1-6 0-9 2-3-2-5-3-9-2zM12 6v15M6 7v9M18 7v9"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10M7.5 4.5l9 5"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8zM3 12l9 4.5 9-4.5M3 16l9 4.5 9-4.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m7 3 14 9-14 9z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M5 19 19 5"/></symbol>
+    <symbol id="i-lens" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6M7 10h6M10 7v6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  </defs></svg>
+  <header class="masthead">
+    <a class="wordmark" href="#" aria-label="物理之書，回到第一章">物理之書<span>THE BOOK OF PHYSICS</span></a>
+    <nav class="utilities" aria-label="檢視選項">
+      <button id="magnify" aria-pressed="false" aria-label="開啟可移動放大鏡"><svg><use href="#i-lens"/></svg><span>放大鏡</span></button>
+      <button id="read-mode"><svg><use href="#i-book"/></svg><span>閱讀模式</span></button>
+      <button id="theme-toggle" aria-label="切換日夜主題"><svg><use href="#i-sun"/></svg><span>日／夜</span></button>
+    </nav>
+  </header>
+  <main>
+    <div id="scene" role="img" aria-label="攤開的手繪物理課本，右頁有可拖動搖柄的立體交流發電機">
+      <canvas id="world" tabindex="0" aria-label="立體發電機：拖搖柄發電；拖空白處環視；方向鍵翻頁；E 分解；空白鍵自動轉動"></canvas>
+    </div>
+    <div class="scene-status" aria-live="polite"><span class="status-dot"></span><span id="status">正在翻開物理課本</span></div>
+    <nav class="view-controls" aria-label="3D 鏡頭">
+      <button data-view="book" aria-pressed="true">全書</button>
+      <button data-view="reading" aria-pressed="false">閱讀</button>
+      <button data-view="mechanism" aria-pressed="false">教具特寫</button>
+      <button data-view="charts" aria-pressed="false">立體數據</button>
+      <button id="book-fold" aria-pressed="true">闔書</button>
+      <button id="guide" aria-pressed="false"><svg><use href="#i-eye"/></svg>導覽</button>
+    </nav>
+    <div id="lens" hidden aria-hidden="true"><canvas id="lens-canvas"></canvas><span>2.2×</span></div>
+    <aside id="lens-note" hidden aria-live="polite"><span class="note-type">書頁註解</span><strong></strong><p></p><small>點選零件可固定說明</small></aside>
+    <div id="part-tip" hidden></div>
+    <div id="loading"><div class="loading-mark">物理之書</div><span>正在繞好線圈，安放磁極</span><div class="loading-rule"></div></div>
+    <section id="fallback" hidden aria-label="無 WebGL 的圖文閱讀版">
+      <img src="./anatomy.svg" alt="手搖交流發電機的 Anatomy 等角立體結構圖">
+      <h1>手搖交流發電機</h1><p>轉動線圈改變磁通量，產生感應電壓。接上負載後形成交流電；齒輪將線圈轉速提高為搖柄的三倍。</p>
+      <p>目前以靜態圖文呈現。閱讀模式保留四章機械說明與電磁感應實驗。</p>
+    </section>
+    <div id="book-accessible-controls" class="controls-wrap" hidden>
+      <div class="experiment-row">
+        <label class="rpm-control" for="rpm"><span>搖柄轉速</span><input id="rpm" type="range" min="0" max="90" value="40" step="5"><output id="rpm-label">40 rpm</output></label>
+        <label class="rpm-control" for="turns"><span>線圈匝數</span><input id="turns" type="range" min="40" max="240" value="120" step="20"><output id="turns-label">120 匝</output></label>
+        <label class="rpm-control" for="field"><span>磁場強度</span><input id="field" type="range" min=".15" max=".9" value=".45" step=".05"><output id="field-label">0.45 T</output></label>
+        <span class="time-scale">自動轉動採 0.18 倍時間演示；讀值為物理轉速</span>
+      </div>
+      <nav class="toolbar" aria-label="發電機操作">
+        <div class="action-group">
+          <button id="popup" class="primary" aria-pressed="true"><svg><use href="#i-cube"/></svg><span>浮出圖解</span></button>
+          <button id="explode" aria-pressed="false"><svg><use href="#i-layers"/></svg><span>分解</span></button>
+          <button id="play" aria-pressed="false"><svg><use href="#i-play"/></svg><span>自動轉動</span></button>
+        </div>
+        <label class="explode-control" for="explode-range"><span>拆解程度</span><input id="explode-range" type="range" min="0" max="100" value="30"><output id="explode-label" for="explode-range">30%</output></label>
+        <button id="reset" class="icon-button" aria-label="重設視角與機械"><svg><use href="#i-reset"/></svg></button>
+        <div class="pagination"><button id="previous" class="icon-button" aria-label="上一章"><svg><use href="#i-left"/></svg></button><span id="page-number">01 / 04</span><button id="next" class="icon-button" aria-label="下一章"><svg><use href="#i-right"/></svg></button></div>
+      </nav>
+      <div class="experiment-switches"><button id="reverse" aria-pressed="false">轉向：正轉</button><button id="polarity" aria-pressed="false">磁極：N → S</button><button id="load" aria-pressed="true">負載：接通</button><button id="field-view" aria-pressed="true">顯示磁場</button><button id="chart-toggle" aria-pressed="true">即時圓柱量測</button></div>
+      <div class="bottom-caption"><span id="chapter-caption">01　結構 · 手搖交流發電機</span><span>拖曳環視書本　／　指向文字放大　／　← → 翻頁</span></div>
+    </div>
+    <section class="mobile-text" aria-label="本章物理說明"><div id="mobile-chapter"></div><button class="text-link" id="mobile-read">展開完整說明 →</button></section>
+  </main>
+  <dialog id="reader" aria-labelledby="reader-title">
+    <button class="close-reader icon-button" aria-label="關閉閱讀模式"><svg><use href="#i-close"/></svg></button>
+    <div class="reader-header">物理之書<span>讀本 / READER</span></div>
+    <div class="reader-tabs" aria-label="課本章節"></div>
+    <article id="reader-content"></article>
+    <details class="sources"><summary>物理模型與資料來源</summary><p>本教具採旋轉線圈交流發電機：每匝面積 80 cm²，均勻磁場，60／20 齒增速齒輪。可調整匝數與磁場；可見導線束為多匝繞組的教學示意。線圈電阻固定 4 Ω，燈泡以 22 Ω 電阻近似，忽略電感與機械摩擦。</p><p>θ 為線圈法線相對左→右參考方向的角度；磁極反轉以 B 的正負表示。感應電動勢 ε = NBAω sinθ；電流 I = ε/(4+22)，電磁扭矩反抗轉動。機械輸入功率 = 燈泡功率 + 線圈發熱。開路仍可能有電壓，但電流與負載功率為零。</p><p><a href="https://openstax.org/books/university-physics-volume-2/pages/13-6-electric-generators-and-back-emf" target="_blank" rel="noreferrer">OpenStax：旋轉線圈發電機</a></p><p><a href="https://market.cloud.edu.tw/resources/web/1812065" target="_blank" rel="noreferrer">教育部：高中物理法拉第電磁感應定律</a></p><p>沿用 Anatomy 的精密機械圖解原則與手繪立體書技能；呈現靈感來自 <a href="https://iamtechartist.com/every-joule/" target="_blank" rel="noreferrer">Every Joule</a>。原創教具幾何與教材文字，Three.js 實作。手寫字型為 LXGW WenKai TC，採 SIL OFL 授權。</p></details>
+  </dialog>
+  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+  <script type="module">/* APP_SCRIPT */</script>
+</body>
+</html>
