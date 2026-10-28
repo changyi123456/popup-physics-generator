@@ -1,0 +1,38 @@
+const TAU=Math.PI*2;
+export const E_SPEC=Object.freeze({radius:.08,bore:.006,thickness:.002,slotInner:.38,slotCount:12,slotAngle:4*Math.PI/180,slotFactor:.16,poleWidth:.025,poleHeight:.025,referenceCoefficient:.00018,referenceField:.45,bearingDrag:.000006,demoScale:.24});
+export function eddyDisk(state={}){const s=E_SPEC,copper=state.eddyMaterial==='copper',density=copper?8960:2700,conductivity=copper?5.96e7:3.5e7,specificHeat=copper?385:900,ri=s.radius*s.slotInner,slots=!!state.eddySlots;
+ const area=Math.PI*(s.radius*s.radius-s.bore*s.bore)-(slots?s.slotCount*s.slotAngle/2*(s.radius*s.radius-ri*ri):0),polar=Math.PI/2*(s.radius**4-s.bore**4)-(slots?s.slotCount*s.slotAngle/4*(s.radius**4-ri**4):0);
+ return {mass:density*s.thickness*area,inertia:density*s.thickness*polar,density,conductivity,specificHeat,slots,copper};
+}
+const patchCache=new Map();
+export function eddyPatch(insertion=20){
+ const key=Math.round(insertion*1000);if(patchCache.has(key))return patchCache.get(key);const s=E_SPEC,cx=s.radius+s.poleWidth/2-insertion/1000,n=160,dy=s.poleHeight/n;let area=0,moment=0;
+ for(let j=0;j<n;j++){const y=-s.poleHeight/2+(j+.5)*dy,edge=Math.sqrt(Math.max(0,s.radius*s.radius-y*y)),lo=Math.max(-edge,cx-s.poleWidth/2),hi=Math.min(edge,cx+s.poleWidth/2);if(hi>lo){area+=(hi-lo)*dy;moment+=((hi**3-lo**3)/3+y*y*(hi-lo))*dy;}}
+ const result={cx,area,moment,fraction:area/(s.poleWidth*s.poleHeight)};patchCache.set(key,result);return result;
+}
+export function eddyCoefficient(state={}){const d=eddyDisk(state),p=eddyPatch(state.eddyInsertion??20),s=E_SPEC;return state.eddyMagnet===false?0:s.referenceCoefficient*((state.eddyField??.45)/s.referenceField)**2*(d.conductivity/3.5e7)*(p.moment/eddyPatch(25).moment)*(d.slots?s.slotFactor:1);}
+export function eddySample(state={}){const d=eddyDisk(state),patch=eddyPatch(state.eddyMagnet===false?0:(state.eddyInsertion??20)),coefficient=eddyCoefficient(state),available=(state.popup??1)>.95&&(state.open??1)>.95&&(state.explode??0)<.025&&!state.turning,omega=available?(state.eddyOmega??0):0,torque=-coefficient*omega;
+ return {...d,patch,coefficient,omega,rpm:Math.abs(omega)*30/Math.PI,torque,loadPower:coefficient*omega*omega,kinetic:.5*d.inertia*omega*omega,decay:(coefficient+E_SPEC.bearingDrag)/d.inertia,motion:!!((state.running||state.manualActive)&&available),energy:state.eddyEnergy??{heat:0,bearing:0,input:0},temperatureRise:(state.eddyEnergy?.heat??0)/(d.mass*d.specificHeat),subject:'eddy'};
+}
+export function eddyAdvance(state,physicalDt){if(!state.running||physicalDt<=0||(state.popup??1)<.95||(state.open??1)<.95||(state.explode??0)>=.025||state.turning)return;const p=eddySample(state),w=state.eddyOmega??0,lambda=p.decay,ratio=Math.exp(-lambda*physicalDt),next=w*ratio,drop=.5*p.inertia*w*w*(-Math.expm1(-2*lambda*physicalDt)),e=state.eddyEnergy??(state.eddyEnergy={heat:0,bearing:0,input:0});state.phase=(state.phase??0)+w*(-Math.expm1(-lambda*physicalDt))/lambda;state.eddyOmega=next;e.heat+=drop*p.coefficient/(p.coefficient+E_SPEC.bearingDrag);e.bearing+=drop*E_SPEC.bearingDrag/(p.coefficient+E_SPEC.bearingDrag);state.eddyElapsed=(state.eddyElapsed??0)+physicalDt;}
+export function eddyKick(state,direction=state.eddyDirection??1){const d=eddyDisk(state),omega=direction*(state.eddyRpm??240)*Math.PI/30,e=state.eddyEnergy??(state.eddyEnergy={heat:0,bearing:0,input:0});e.input+=.5*d.inertia*(omega*omega-(state.eddyOmega??0)**2);state.eddyOmega=omega;state.eddyElapsed=0;}
+export const EDDY_PARTS={
+ ed_disk:{title:'可換金屬圓盤',english:'CONDUCTING DISK',text:'圓盤半徑 80 mm、厚 2 mm，軸孔半徑 6 mm。可切換鋁與銅；密度與導電率都會改變，因此比較減速時必須同時考慮轉動慣量。'},
+ ed_slots:{title:'邊緣開槽與保留輪轂',english:'SLOTTED DISK',text:'12 道 4° 邊緣開槽，從 0.38 倍半徑延伸到外緣。開槽切斷較大的閉合電流路徑，也移除部分質量。模型使用實際扇形缺口計算慣量，抑流係數 0.16 為教學示意。'},
+ ed_magnet:{title:'C 型電磁鐵與磁極靴',english:'MOVABLE ELECTROMAGNET',text:'磁場穿過圓盤厚度方向。磁鐵與圓盤沒有摩擦接觸；移入磁極會增加有效導體重疊。模型從實際圓盤與矩形磁極交集計算受場區域的面積矩。'},
+ ed_coil:{title:'勵磁繞組與接線柱',english:'FIELD COIL',text:'書頁的 B 直接指定氣隙磁場，繞組表示建立磁場的電磁鐵。未模擬電源電路或磁飽和；低速近似下，煞車係數隨 B² 增加。'},
+ ed_current:{title:'局部渦電流方向示意',english:'LOCAL EDDY CURRENTS',text:'導體通過磁極區域時產生環流，磁力矩反抗轉動。圖上的箭頭表示局部方向，不是有限元素電流密度解；開槽狀態以中斷線條表示較難形成完整環流。'},
+ ed_carriage:{title:'磁鐵滑台與進給螺桿',english:'POLE INSERTION CARRIAGE',text:'導軌與螺桿讓磁極沿半徑方向移入圓盤。書頁以 mm 控制移入距離；氣隙保持固定，重疊百分比由真實輪廓交集計算。'},
+ ed_shaft:{title:'主軸、軸承與手推柄',english:'SHAFT & HAND START',text:'拖動手推柄可手動給圓盤能量；按「再推一把」則以設定轉速起轉。放開後依磁煞車與軸承阻力自然減速，機械能分別變成渦電流熱與軸承耗散。'},
+ ed_frame:{title:'實驗底座與感測架',english:'MEASUREMENT BENCH',text:'底板固定軸承、滑台與轉速感測頭。先停轉再拆解，圓盤、磁極與滑台分組展開；溫升依 Q/(mc) 計算，沒有誇大為發紅的高溫效果。'}
+};
+export const EDDY_CHAPTERS=[
+ {label:'構造',kicker:'第四部 · 01 / 沒有碰到，也能減速',title:'渦電流煞車',subtitle:'BRAKING WITHOUT CONTACT',paragraphs:['磁鐵不碰圓盤，轉動仍慢了下來。','手推金屬圓盤後放開，把磁極移入。導體內的渦電流產生反抗運動的磁力矩，將轉動能量變成熱。'],figure:'旋轉金屬圓盤與可移磁極',caption:'拖圓盤手柄，或按啟動後放手。',note:'低速線性阻尼近似 · 非實機標定',question:'磁鐵沒碰圓盤，能量去哪裡了？',answer:'大部分成為導體的電阻熱，另有少量軸承耗散。',defaultExplode:0},
+ {label:'感應',kicker:'第四部 · 02 / 穿過磁場的金屬',title:'把轉動，變成環流',subtitle:'MOTION · INDUCTION · OPPOSING TORQUE',paragraphs:['渦電流的磁作用，反抗原本的轉動。','煞車力矩在本模型中為 τ = −kω，因此 P熱 = kω² ≥ 0。越接近靜止，磁煞車力矩越小。'],figure:'局部環流與反向磁力矩',caption:'電流箭頭是方向示意，並非電流密度計算。',note:'磁場沿圓盤厚度方向 · 圓盤在極間有氣隙',question:'停住之後，渦電流煞車能把圓盤鎖住嗎？',answer:'本模型 ω = 0 時 τ = 0，沒有靜止保持力。',defaultExplode:0},
+ {label:'比較',kicker:'第四部 · 03 / 開一道槽，會差多少？',title:'完整圓盤，還是開槽？',subtitle:'CURRENT PATHS & ROTATIONAL INERTIA',paragraphs:['切開電流路徑，也改變轉動慣量。','固定起轉速度、磁場與磁極位置，比較整片與開槽。再更換鋁、銅，留意導電率和密度都在改變。'],figure:'導體輪廓與自然減速比較',caption:'開槽抑流係數 0.16 為示意，不是量測資料。',note:'慣量由圓盤、軸孔與 12 道實際缺口計算',question:'銅導電率較大，就一定比較快停嗎？',answer:'還要看慣量；同尺寸銅盤較重，減速由 (k+b)/J 決定。',defaultExplode:0},
+ {label:'能量',kicker:'第四部 · 04 / 每一點減速，都有去處',title:'慢下來的能量去哪裡？',subtitle:'KINETIC ENERGY BECOMES HEAT',paragraphs:['轉速下降，熱量持續累積。','初始轉動能減少的部分，分配到渦電流熱與軸承耗散。可移開磁鐵比較滑行，也可再次手推加入能量。'],figure:'轉動能 → 渦電流熱與軸承耗散',caption:'本模型忽略冷卻；圓盤溫升依熱容量計算。',note:'Q熱 + Q軸承 + K = 手部淨輸入能量',question:'反向轉動時，渦電流會幫圓盤越轉越快嗎？',answer:'不會；力矩也反向，仍與角速度相反，發熱保持非負。',defaultExplode:0}
+];
+export function auditEddy(){let checks=0;const failures=[],check=(x,s)=>{checks++;if(!x)failures.push(s);};const base={eddyField:.45,eddyInsertion:20,eddyRpm:240,popup:1,open:1,running:true};
+ check(Math.abs(eddyCoefficient({...base,eddyField:.9})/eddyCoefficient(base)-4)<1e-12,'B squared scaling');check(eddyCoefficient({...base,eddyMagnet:false})===0,'magnet removed');check(eddyPatch(0).area===0,'no overlap at zero insertion');check(eddyDisk({...base,eddySlots:true}).inertia<eddyDisk(base).inertia,'slots remove real inertia');check(eddyDisk({eddyMaterial:'copper'}).mass>eddyDisk({}).mass,'density change');
+ for(const slots of [false,true])for(const material of ['aluminum','copper'])for(const direction of [-1,1]){const s={...base,phase:0,eddySlots:slots,eddyMaterial:material,eddyDirection:direction,eddyEnergy:{heat:0,bearing:0,input:0}};eddyKick(s);const initial=eddySample(s).kinetic;for(let j=0;j<120;j++){eddyAdvance(s,1/120);const p=eddySample(s);check(p.torque*p.omega<=1e-14,'Lenz torque');check(p.loadPower>=0,'nonnegative heat power');check(Math.abs(p.kinetic+p.energy.heat+p.energy.bearing-initial)<1e-12,'exact energy balance');}check(Math.abs(s.eddyOmega)<base.eddyRpm*Math.PI/30,'free decay');}
+ check(eddySample({...base,eddyOmega:0}).torque===0,'no static holding torque');return {passed:!failures.length,checks,failures,aluminumMassKg:eddyDisk({}).mass,aluminumInertia:eddyDisk({}).inertia,coefficient:eddyCoefficient(base),overlap:eddyPatch(20).fraction,scope:'low-speed phenomenological eddy damping, exact disk sector inertia and field-patch overlap, analytic energy decay; slot factor illustrative, no field solution or hardware calibration'};}

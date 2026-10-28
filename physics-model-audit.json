@@ -17,5 +17,26 @@
     "afterFiveSecondsRpm": 197.96068639855022,
     "energyResidual": -1.9984014443252818e-15,
     "scope": "exact finite connecting rods, uniform pressure, ideal gas, isothermal spaces, ideal regenerator, midpoint flywheel and brake dynamics; no real engine performance or swept collision guarantee"
+  },
+  "governor": {
+    "passed": true,
+    "checks": 1088,
+    "failures": [],
+    "feedbackRpm": 117.70675495002058,
+    "openLoopRpm": 195.62982937586773,
+    "loadedRpm": 114.01275156472721,
+    "opening": 0.5240585956243778,
+    "loadedOpening": 0.6221124954452101,
+    "scope": "equal-arm Porter geometry, coupled shaft/arm dynamics, simplified motor and proportional position feedback; no hardware or manufacturing calibration"
+  },
+  "eddy": {
+    "passed": true,
+    "checks": 2894,
+    "failures": [],
+    "aluminumMassKg": 0.10796271649620542,
+    "aluminumInertia": 0.00034742402168478904,
+    "coefficient": 0.0001535641228958319,
+    "overlap": 0.7869315771284224,
+    "scope": "low-speed phenomenological eddy damping, exact disk sector inertia and field-patch overlap, analytic energy decay; slot factor illustrative, no field solution or hardware calibration"
   }
 }

@@ -1,18 +1,25 @@
 # 物理之書：機械與能量
 
-一本可以拆解、操作、翻閱的手繪 3D 物理實驗書。手搖發電機與史特靈熱機共用同一本實體書、鏡頭、放大鏡、翻頁與即時量測架。
+一本可以拆解、操作、翻閱的手繪 3D 物理實驗書。手搖發電機、史特靈熱機、離心調速器與渦電流煞車共用同一本實體書、鏡頭、放大鏡、翻頁與即時量測架。
 
-**[翻開全書](https://changyi123456.github.io/popup-physics-generator/)** · [發電機篇](https://changyi123456.github.io/popup-physics-generator/#generator-1) · [熱機篇](https://changyi123456.github.io/popup-physics-generator/#stirling-1) · [離線單檔](dist/index.html) · [MIT 授權](LICENSE)
+**[翻開全書](https://changyi123456.github.io/popup-physics-generator/)** · [發電機篇](https://changyi123456.github.io/popup-physics-generator/#generator-1) · [熱機篇](https://changyi123456.github.io/popup-physics-generator/#stirling-1) · [調速器篇](https://changyi123456.github.io/popup-physics-generator/#governor-1) · [渦電流篇](https://changyi123456.github.io/popup-physics-generator/#eddy-1) · [離線單檔](dist/index.html) · [MIT 授權](LICENSE)
 
-![手繪立體史特靈熱機與即時圓柱量測](assets/preview.png)
+![手繪立體離心調速器與即時圓柱量測](assets/preview.png)
 
-## 同一本書的兩部內容
+## 一座機械一頁，後面接科學史
 
-第一部「電磁與能量」：手搖發電機的構造、感應、週期、能量，共四個跨頁。
+| 頁序 | 內容 |
+|---|---|
+| 1–2 | 手搖發電機操作；法拉第與電磁感應的科學史 |
+| 3–4 | 史特靈熱機操作；節熱器與回熱思路的科學史 |
+| 5–6 | 離心調速器操作；飛球、蒸汽閥與回授的科學史 |
+| 7–8 | 渦電流煞車操作；阿拉戈、傅科與磁制動的科學史 |
 
-第二部「熱與機械」：史特靈熱機的構造、循環、做功、實驗，共四個跨頁。
+四座裝置各保留一個操作跨頁，共八個實體跨頁。科學史是純紙面時間軸與原創概念手繪圖，不放立體機械、量測架或實驗控制；圖稿不是歷史原器復刻。點史料註記可讀文字與原始資料連結。
 
-點書頁頂端的分部索引，或開啟「目錄」跳到指定跨頁。←／→ 可連續翻閱八個跨頁。跨頁前先收回裝置；回到另一部時保留其參數與累積量。新開啟時展示熱機篇，也可用上方網址片段直達指定跨頁，例如 `#stirling-2`。
+**拖右下書角往左翻、拖左下書角往右翻。** 紙張彎曲跟隨手勢；短拖會回彈，過半或快速甩動則完成。裝置先收回紙面，印在紙上的機械圖也跟著紙張翻走，翻到下一座時才立起。滑鼠與觸控共用此操作，不需要目錄切換裝置。←／→ 與手機按鈕是替代控制。
+
+閱讀模式保留原本四部、每部四個完整小節，共 16 節；其小節選擇與實體書的八頁順序分開。參數、物理相位及累積能量按裝置保留。新開啟從發電機開始；`#governor-1` 直達調速器，`#governor-history` 直達其科學史；舊的 `#stirling-2` 等片段保留對應閱讀小節。
 
 ## 可以親手做什麼
 
@@ -20,7 +27,9 @@
 - 右頁直接控制浮起／收回、拆解／組裝、運轉／暫停、條件切換與重設；左頁滑桿調整當前裝置參數。
 - 發電機：拖搖柄、改轉速／匝數／磁場、交換磁極、反轉、切換電阻負載。暖黃色燈泡隨負載功率明暗變化。
 - 熱機：拖飛輪手動探索，或啟動時給一個手推起轉；調整熱端、冷端溫度與煞車負載，切換剖面、加熱與負載釋放。
-- 右側書邊的立體圓柱面向裝置。發電機顯示 Φ、ε、P；熱機顯示 p、V、機械負載功率。底部同步累積輸出能量。
+- 調速器：改動力供給、軸端負載與中央配重，切換回授、突加負載。飛球張角、套筒升程、撥叉與動力開度共同作動。
+- 渦電流：手推圓盤後放手滑行，調磁場與磁極位置，對照整片／開槽圓盤、鋁／銅材質。磁極移開則無磁制動；開槽和材質更換先停轉並清除該次能量。
+- 右側書邊的立體圓柱面向裝置。發電機顯示 Φ、ε、P；熱機顯示 p、V、機械負載功率；調速器顯示轉速、升程與動力開度；渦電流顯示轉速、制動力矩與發熱功率。底部同步累積輸出能量。
 - 放大鏡可檢視實際書頁和零件；紙上問答可掀開。手機提供可讀文字與原生控制；無 WebGL 時保留各篇結構示意與讀本。
 
 拖空白處環視；Shift 拖曳只旋轉教具；滾輪縮放。「立體數據」同時近看裝置與量測架。原生替代控制都在閱讀模式內。
@@ -29,7 +38,7 @@
 
 ## 快速開始
 
-下載後直接以現代瀏覽器開啟 `dist/index.html`。約 7.3 MB 的離線單檔已內嵌 Three.js、完整繁中手寫字型、程式與兩篇向量備援圖，不需外部資源。
+下載後直接以現代瀏覽器開啟 `dist/index.html`。約 7.7 MB 的離線單檔已內嵌 Three.js、完整繁中手寫字型、程式與四篇向量備援圖，不需外部資源。
 
 開發需 Node.js 20 以上與 Python 3，不需安裝 npm 依賴：
 
@@ -75,24 +84,64 @@ Eload = ∫ Pload dt
 
 Φ 與 ε 相差四分之一週期；電阻負載功率週期為 T/2，兩個半週都累積電能。發電機以 0.18 倍時間、熱機以 0.24 倍時間演示，轉速讀值仍為物理轉速。
 
+## 調速器模型
+
+等臂 Porter 式：每個飛球 250 g、臂長 150 mm，中央套筒質量可調，角度限制 22°–62°。兩組定長上下臂把球的張角變成套筒升程；止推環、撥叉與連桿控制馬達供給。模型聯立主軸與臂的慣性、重力、阻尼、止擋和簡化馬達曲線，以 RK4 積分。比例回授有轉速下垂，並非完美恆速。向心箭頭代表圓周加速度項，不把離心力當作實驗室座標中額外作用力。
+
+```text
+r = L sinθ ; h = L cosθ
+升程 = 2L(cosθmin − cosθ)
+平衡：ω² = (1 + M/m)g / (L cosθ)
+動力開度 = clamp(供給 − 回授增益 × 正規化升程, 0, 1)
+```
+
+## 渦電流模型
+
+半徑 80 mm、軸孔 6 mm、厚 2 mm 的導電盤；12 道 4° 邊緣開槽從 0.38R 延伸到盤緣。實際幾何、質量與慣量都扣除同樣缺口。鋁、銅使用代表性室溫材料常數；模型不是材料鑑定。
+
+```text
+τ = −kω ; P熱 = kω² ≥ 0
+k ∝ B² × 導電率 × 厚度 × 磁極交集面積矩 × 開槽係數
+ω(t) = ω₀ exp[−(k+b)t/J]
+手部淨輸入 = 圓盤動能 + 渦電流熱 + 軸承耗散
+```
+
+磁極是 25 mm 方形，依它與真正圓盤的交集積分面積矩；磁極移開或 B=0 時 k=0。開槽抑流係數 0.16 是教學示意，未解電磁場或硬體標定。解析衰減同時計算相位、渦電流熱與軸承耗散；靜止時沒有磁保持力。熱量只轉成小幅的真實計算溫升，沒有誇大成發光高溫。
+
+兩座新裝置以 0.24 倍時間展示，讀值仍是物理量。圓柱與裝置動作直接讀同一個模型，暫停則凍結模型時間。
+
 ## 驗證範圍
 
-`node build.mjs --audit` 驗證發電機 2,416 項條件、熱機 3,614 項條件，以及實際 WebGL 幾何的 361 個線圈／齒輪姿態、721 個雙連桿端點姿態。熱機檢查固定氣體總量、體積導數、定長連桿、每圈能量平衡、等溫零淨功、理想效率上限及飛輪離散能量收支。
+`node build.mjs --audit` 驗證發電機 2,416 項條件、熱機 3,614 項條件，調速器 1,088 項、渦電流 2,894 項，共 10,012 項物理條件，以及實際 WebGL 幾何的 361 個線圈／齒輪姿態、721 個熱機連桿端點姿態、361 個調速連桿與固定尺／支柱間隙姿態與 244 個圓盤軸／滑台姿態。熱機檢查固定氣體總量、體積導數、定長連桿、每圈能量平衡、等溫零淨功、理想效率上限及飛輪離散能量收支。
 
-兩部均為教學幾何。這些檢查不等同全機的掃掠碰撞、製造公差或實機性能驗證。
+四部均為教學幾何。這些檢查不等同全機的掃掠碰撞、製造公差或實機性能驗證。
 
 ## 共用架構
 
-- `src/library.js`：全書目錄、分部、跨頁、零件說明與量測路由。
+- `src/library.js`：分部、獨立的實體頁序／完整讀本、科學史、零件說明與量測路由。
 - `src/model.js`／`src/generator.js`：發電機物理與實體構造。
 - `src/stirling-model.js`／`src/stirling.js`：熱機熱力學、動力學與實體構造。
+- `src/governor-model.js`／`src/governor.js`：調速器耦合動力學、負回授與機構。
+- `src/eddy-model.js`／`src/eddy.js`：渦電流阻尼、材料與缺口慣量、磁隙滑台。
+- `src/machine-kit.js`：新裝置共用的手繪原生實體零件。
 - `src/book.js`：唯一一套曲面紙張、印刷控制、問答紙片與雙向翻頁。
 - `src/charts.js`：共用的右頁折出量測架與動態圓柱。
 - `src/main.js`：共用場景、當前裝置、狀態、鏡頭與手勢。
 - `src/ink.js`／`src/lens.js`：手繪材質與實際畫面放大鏡。
-- `build.mjs`：離線打包、兩篇備援圖與模型／幾何驗證。
+- `build.mjs`：離線打包、四篇備援圖與模型／幾何驗證。
 
 ## 來源與授權
+
+- [GUNT：離心調速器實驗台](https://www.gunt.de/images/datasheet/1421/TM-632-Centrifugal-governor-gunt-1421-pdf_1_en-GB.pdf)
+- [TecQuipment：Governors](https://www.tecquipment.com/pt/governors)
+- [PASCO：完整／開槽金屬片與渦電流](https://cdn.pasco.com/product_document/Magnetic-Force-Accessory-Manual-EM-8642A.pdf)
+- [皇家研究院：法拉第發電實驗](https://www.rigb.org/explore-science/explore/collection/michael-faradays-generator)
+- [蘇格蘭國立博物館：史特靈與節熱器](https://blog.nms.ac.uk/2016/09/26/200-years-from-stirling-to-saturn-with-a-time-machine/)
+- [NASA：1816、1827 年史特靈專利書目](https://ntrs.nasa.gov/api/citations/19780016056/downloads/19780016056.pdf)
+- [Science Museum Group：瓦特與調速器](https://collection.sciencemuseumgroup.org.uk/people/ap24508/watt-james)
+- [Maxwell：On Governors, 1868 原論文](https://webhomes.maths.ed.ac.uk/~v1ranick/papers/maxwell1.pdf)
+- [University of Perugia：阿拉戈裝置](https://fisgeo.unipg.it/dipartimento/collezione-storica-degli-strumenti-di-fisica/contenuti-delle-teche/elettrotecnica/apparato-di-arago)
+- [École Polytechnique：1855 年傅科示範器](https://artsandculture.google.com/asset/appareil-de-foucault-ou-machine-d-induction-de-foucault/KgF4tnCtpbYypA?hl=fr)
 
 - [日本海上技術安全研究所：史特靈熱機構造](https://www.nmri.go.jp/archives/eng/khirata/stirling/kiriki/begin/struct.html)
 - [Ohio University：理想等溫分析與限制](https://people.ohio.edu/urieli/stirling/isothermal/isothermal.html)

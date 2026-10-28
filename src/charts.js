@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import { smooth, fmt, clamp } from './model.js';
-import { sample } from './library.js';
+import { sample, measurementsFor } from './library.js';
 import { paperMaterial, inkEdges } from './ink.js';
 export function createDataCharts(){
  const root=new THREE.Group();root.position.set(198,2.4,0);
@@ -39,14 +39,14 @@ export function createDataCharts(){
   visibility+=((state.showCharts===false?0:1)-visibility)*.15;
   const lift=smooth(state.popup??1)*visibility;root.visible=visibility>.002&&(state.open??1)>.015;
   graph.scale.y=.003+.997*smooth(clamp(lift*1.7-.45,0,1));hinge.rotation.z=Math.PI*(1-smooth(clamp(lift*2,0,1)));
-  const p=sample(state),thermal=p.subject==='stirling',ranges=thermal?[300,30,Math.max(.5,Math.ceil((p.brakeCoefficient*(p.cycle.work/(Math.PI*2)/(.00065+p.brakeCoefficient))**2*1.7)*2)/2)]:[7.2,Math.max(6,Math.ceil(p.peak/6)*6),Math.max(1,Math.ceil(p.settingPeakPower))],values=thermal?[p.pressure/1000,p.volume*1e6,p.loadPower]:[p.flux*1000,p.emf,p.loadPower];
+  const p=sample(state),view=measurementsFor(state,p),{ranges,values}=view;
   for(let i=0;i<3;i++){
    const d=data[i],height=clamp(values[i]/ranges[i],-1,1)*20,length=Math.max(.035,Math.abs(height)),positions=d.body.geometry.attributes.position;
    for(let j=0;j<positions.count;j++)positions.setY(j,d.original[j*3+1]*length);
    positions.needsUpdate=true;d.body.geometry.computeBoundingSphere();d.body.position.y=25+height/2;d.cap.position.y=25+height;
   }
-  const now=typeof performance!=='undefined'?performance.now():0,key=values.map(v=>fmt(v)).join('|')+'|'+fmt(p.energy.load,2)+'|'+ranges.join(',')+'|'+p.subject;
-  if(key!==lastKey&&now-lastLabel>90){lastKey=key;lastLabel=now;title(thermal?'壓力 · 體積 · 機械輸出':'磁通量 · 電壓 · 電能輸出');legend(thermal?'密閉氣體 · 即時量測 · 輸出為煞車機械功率':'Φ、ε 可正可負；P ≥ 0 · 零點在水平標線');data.forEach((d,i)=>{d.writeName((thermal?['p / kPa','V / mL','P軸 / W']:['Φ / mWb','ε / V','P / W'])[i]);d.writeValue((!thermal&&values[i]>0&&i<2?'+':'')+fmt(values[i],i===2?3:2));d.writeRange((!thermal&&i<2?'±':'0–')+ranges[i]+(thermal?[' kPa',' mL',' W']:[' mWb',' V',' W'])[i]);});foot((thermal?'累積機械輸出 W = ':'累積送到燈泡 E = ')+fmt(p.energy.load,3)+' J');}
+  const now=typeof performance!=='undefined'?performance.now():0,key=values.map(v=>fmt(v)).join('|')+'|'+view.foot+'|'+ranges.join(',')+'|'+p.subject;
+  if(key!==lastKey&&now-lastLabel>90){lastKey=key;lastLabel=now;title(view.title);legend(view.legend);data.forEach((d,i)=>{d.writeName(view.names[i]);d.writeValue((view.signed[i]&&values[i]>0?'+':'')+fmt(values[i],view.digits[i]));d.writeRange((view.signed[i]?'±':'0–')+fmt(ranges[i],ranges[i]<1?1:0)+view.units[i]);});foot(view.foot);}
  }
  return {root,meshes,pose,get visible(){return root.visible&&visibility>.15;}};
 }

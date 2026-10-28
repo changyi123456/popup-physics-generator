@@ -1,6 +1,6 @@
 import * as THREE from "./vendor/three.module.js";
 import { SPEC, fmt, gearProfile } from "./model.js";
-import { CHAPTERS, PARTS, sample, subjectAt } from "./library.js";
+import { CHAPTERS, PARTS, BOOK_SPREADS, HISTORIES, sample, subjectAt, parametersFor, switchesFor, measurementsFor, benchValues, benchPlot } from "./library.js";
 import { stThermo } from "./stirling-model.js";
 import { paperMaterial, inkEdges } from "./ink.js";
 
@@ -143,7 +143,7 @@ export function createBook() {
   ca.beginPath();ca.arc(-90,0,100,0,Math.PI*2);ca.moveTo(-12,0);ca.arc(-90,0,78,0,Math.PI*2);ca.stroke();
   for(let j=0;j<6;j++){const a=j/6*Math.PI*2;penLine(ca,-90,0,-90+78*Math.cos(a),78*Math.sin(a),.6);}
   ca.strokeRect(52,-90,66,180);ca.strokeRect(142,-90,66,180);ca.strokeRect(55,-10,60,16);ca.strokeRect(145,-45,60,16);penLine(ca,85,-10,100,-145,1);penLine(ca,175,-45,160,-145,1);penLine(ca,-90,-145,175,-145,1);
-  text(ca,'Ⅰ 電磁 · Ⅱ 熱與機械',0,180,23,'#42583e',{align:'center'});ca.restore();
+  text(ca,'電磁 · 熱機 · 調速 · 制動',0,180,23,'#42583e',{align:'center'});ca.restore();
   text(ca,'機械與能量 · 立體實驗讀本',400,1070,24,'#42583e',{align:'center',spacing:2});
   const coverLabel = new THREE.Mesh(new THREE.PlaneGeometry(143, 216), new THREE.MeshBasicMaterial({ map: texture(coverArt), toneMapped: false }));
   coverLabel.rotation.x = Math.PI / 2; coverLabel.rotation.z = Math.PI; coverLabel.position.set(-99, -8.15, 0); sideGroups[0].add(coverLabel);
@@ -160,10 +160,10 @@ export function createBook() {
     thumb.castShadow = true; thumb.receiveShadow = true; sideGroups[i === 3 ? 1 : 0].add(thumb); sliderThumbs.push(thumb);
   }
 
-  let latest = {}, turnMesh = null, turnTexture = null, turnOriginal = null,turnDirection=1;
+  let latest = {}, turnMesh = null, turnTexture = null, turnOriginal = null,turnDirection=1,turnCanvas=null,turnDiagram=null;
   function beginTurn(backwards=false) {
     if (turnMesh) return;
-    const snapshot = canvas(1488, 1952);
+    const snapshot = canvas(1488, 1952);turnCanvas=snapshot;
     snapshot.getContext("2d").drawImage(canvases[backwards?0:1], 0, 0);
     turnDirection=backwards?-1:1;
     turnTexture = texture(snapshot);
@@ -178,14 +178,48 @@ export function createBook() {
   }
   function endTurn() {
     if (!turnMesh) return;
+    if(turnDiagram){turnDiagram.overlay.material.dispose();turnDiagram.target.dispose();turnDiagram=null;}
     group.remove(turnMesh); turnMesh.geometry.dispose(); turnMesh.material.dispose(); turnTexture.dispose();
-    turnMesh = null; turnTexture = null; turnOriginal = null;
+    turnMesh = null; turnTexture = null; turnOriginal = null;turnCanvas=null;
+  }
+  function drawHistory(ctx,id,index,colors){
+    const {ink,muted,line,accent,dark}=colors,h=HISTORIES[id],n=latest.bookPage??0;
+    text(ctx,h.kicker,15,8.5,3.1,muted);text(ctx,String(n+1).padStart(2,'0')+' / '+BOOK_SPREADS.length,171,8.5,3,muted,{align:'right'});
+    if(index===0){
+      text(ctx,'MECHANICAL SCIENCE · A FIELD NOTE',15,24,3.4,muted);text(ctx,h.title,14,46,14.5,ink);text(ctx,h.subtitle,15,57,2.9,muted);
+      wrap(ctx,h.intro,15,73,154,4.3,accent,6.8);wrap(ctx,h.story,15,93,154,4.1,ink,6.8);
+      ctx.strokeStyle=line;ctx.lineWidth=.35;penLine(ctx,19,129,19,205);
+      h.events.forEach((e,i)=>{const y=134+i*39;ctx.fillStyle=accent;ctx.beginPath();ctx.arc(19,y-1,1.4,0,Math.PI*2);ctx.fill();text(ctx,e[0],26,y,4.2,accent);text(ctx,e[1],26,y+9,4.7,ink);wrap(ctx,e[2],26,y+18,143,3.7,muted,6);});
+      text(ctx,'一次發現，常常從反覆比較開始。',15,220,3.7,muted);
+    }else{
+      text(ctx,'在紙上，重走一次發明的思路',15,26,5,accent);text(ctx,h.sketchTitle,15,39,8,ink);
+      // Original concept sketches: drawn ink on paper, never historical replicas.
+      ctx.save();ctx.translate(23,52);ctx.strokeStyle=ink;ctx.fillStyle=dark?'#394535':'#e5e8d3';ctx.lineWidth=.5;
+      const ln=(a,b,c,d)=>penLine(ctx,a,b,c,d,.13),circle=(x,y,r)=>{ctx.beginPath();ctx.ellipse(x,y,r,r*.98,-.015,0,Math.PI*2);ctx.stroke();};
+      if(id==='generator'){
+        ctx.fillStyle=dark?'#796651':'#dbc0a0';penBox(ctx,7,31,48,13);text(ctx,'N',12,40,5,ink);text(ctx,'S',43,40,5,ink);ln(23,23,49,23);ln(49,23,44,20);ln(49,23,44,26);
+        ctx.fillStyle=dark?'#46533f':'#e1e3cd';for(let i=0;i<10;i++){ctx.beginPath();ctx.ellipse(66+i*3,37,5,19,0,0,Math.PI*2);ctx.stroke();}
+        ln(65,55,65,73);ln(65,73,115,73);ln(115,73,115,50);ln(94,19,126,19);ln(126,19,126,38);circle(120,43,11);ln(120,43,115,35);text(ctx,'G',120,49,4,ink,{align:'center'});text(ctx,'磁鐵來回移動',5,8,3.8,muted);text(ctx,'固定線圈',60,8,3.8,muted);text(ctx,'檢流計',105,86,3.6,muted);
+      }else if(id==='stirling'){
+        for(const [x,c,label] of [[5,dark?'#80634b':'#dbc0a0','熱端'],[108,dark?'#506a62':'#c7d8cc','冷端']]){ctx.fillStyle=c;penBox(ctx,x,25,30,43);text(ctx,label,x+15,20,4,ink,{align:'center'});ln(x+2,50,x+28,50);ln(x+15,50,x+15,75);}
+        ctx.fillStyle=dark?'#5c6045':'#d8d8b6';penBox(ctx,48,32,43,25);for(let i=0;i<12;i++)ln(50+i*3.2,34,50+i*3.2,55);ln(35,37,48,37);ln(91,37,108,37);ln(35,52,48,52);ln(91,52,108,52);text(ctx,'回熱材料',69,26,4,ink,{align:'center'});ln(45,72,96,72);ln(96,72,90,69);ln(96,72,90,75);text(ctx,'往返氣流 · 暫存再取回',70,87,3.8,muted,{align:'center'});
+      }else if(id==='governor'){
+        ln(48,9,48,78);circle(48,14,2);ln(48,14,22,43);ln(48,14,74,43);ln(22,43,48,68);ln(74,43,48,68);ctx.fillStyle=dark?'#8c7951':'#dec795';for(const x of [22,74]){ctx.beginPath();ctx.arc(x,43,7,0,Math.PI*2);ctx.fill();ctx.stroke();}ctx.fillStyle=dark?'#53604c':'#d5dfc7';penBox(ctx,41,60,14,12);ln(55,66,94,57);circle(94,57,2);ln(94,57,122,48);ln(122,48,122,62);penBox(ctx,104,62,34,12);ln(105,68,137,68);text(ctx,'飛球張開',4,8,4,muted);text(ctx,'套筒 ↑',5,82,4,muted);text(ctx,'節流閥收小',97,86,3.8,muted);
+      }else{
+        ctx.fillStyle=dark?'#776f54':'#d8c39a';ctx.beginPath();ctx.arc(57,45,34,0,Math.PI*2);ctx.fill();ctx.stroke();circle(57,45,4);ln(57,45,7,67);text(ctx,'轉動圓盤',12,9,4,muted);ctx.fillStyle=dark?'#465d52':'#ccdacb';penBox(ctx,79,18,34,17);penBox(ctx,79,56,34,17);penBox(ctx,109,18,10,55);text(ctx,'N',94,30,5,ink,{align:'center'});text(ctx,'S',94,68,5,ink,{align:'center'});ctx.strokeStyle=accent;for(const y of [40,51]){circle(83,y,5);ln(87,y,84,y-3);}text(ctx,'局部環流',105,44,3.6,accent);text(ctx,'磁極之間的氣隙',91,87,3.8,muted,{align:'center'});
+      }
+      ctx.restore();text(ctx,h.sketchCaption,16,151,3.2,muted);rule(ctx,157,line);text(ctx,h.bridgeTitle,16,170,5,accent);wrap(ctx,h.bridge,16,180,153,3.9,ink,6.3);wrap(ctx,h.question,16,211,153,3.4,muted,5.5);
+      text(ctx,'史料與延伸閱讀 ↗',16,226,3.4,accent);hitRegions.push({side:'right',x:14,y:219,w:106,h:10,kind:'button',action:'history-sources'});
+    }
+    const right=index===1;ctx.strokeStyle=line;ctx.lineWidth=.24;ctx.fillStyle=dark?'#596348':'#e1dcc6';if(!right||n<BOOK_SPREADS.length-1){ctx.beginPath();ctx.moveTo(right?184:2,221);ctx.lineTo(right?163:23,242);ctx.lineTo(right?184:2,242);ctx.closePath();ctx.fill();ctx.stroke();}
+    text(ctx,right?(n<BOOK_SPREADS.length-1?'拖書角 →':'闔書 →'):'← 拖書角',right?171:15,238,3.4,ink,{align:right?'right':'left'});text(ctx,String(n*2+index+1).padStart(2,'0'),right?130:171,237,2.7,muted,{align:'right'});
+    hitRegions.push({side:right?'right':'left',x:right?134:0,y:230,w:52,h:14,kind:right&&n===BOOK_SPREADS.length-1?'button':'turn',action:right?(n===BOOK_SPREADS.length-1?'book-fold':'next'):'previous'});
   }
   function draw(state) {
     latest=state;
-    const {chapter=0,theme='light',selected=null,rpm=40,turns=120,field=.45}=state,ch=CHAPTERS[chapter],p=sample(state),thermal=chapter>=4,local=chapter%4,subject=subjectAt(chapter),dark=theme==='dark';
+    const {theme='light',selected=null,rpm=40,turns=120,field=.45}=state,chapter=subjectAt(state.chapter).start,ch=CHAPTERS[chapter],p=sample(state),subject=subjectAt(chapter),thermal=subject.id==='stirling',bench=subject.id==='governor'||subject.id==='eddy',local=chapter-subject.start,dark=theme==='dark';
     const ink=dark?'#e6dfd0':'#293c2d',muted=dark?'#b2b6a3':'#647258',line=dark?'#64715a':'#a1ad8c',paper=dark?'#303a32':'#f3eedf',accent=dark?'#cdbb84':'#8b663a';
-    hitRegions.length=0;
+    hitRegions.length=0;flap.visible=!state.history;sliderThumbs.forEach(t=>t.visible=!state.history);
     const drawButton=(ctx,b,x,y,w=48)=>{
       ctx.fillStyle=b.active?(dark?'#56644a':'#d9dfc2'):(dark?'#3b4635':'#eee8d7');ctx.strokeStyle=b.active?muted:line;ctx.lineWidth=.28;penBox(ctx,x,y,w,11);
       if(b.active){ctx.strokeStyle=dark?'#8e9c7b':'#a9b88c';ctx.lineWidth=.17;for(let j=0;j<Math.floor(w/3);j++)penLine(ctx,x+1+j*3,y+10,x+3+j*3,y+1,.08);}
@@ -196,11 +230,27 @@ export function createBook() {
       let seed=35;ctx.fillStyle=dark?'rgba(240,232,201,.03)':'rgba(97,83,55,.04)';
       for(let i=0;i<600;i++){seed=seed*16807%2147483647;const x=seed/2147483647*186;seed=seed*16807%2147483647;ctx.fillRect(x,seed/2147483647*244,.07,.05);}
       rule(ctx,13,line);rule(ctx,229,line);
+      if(state.history){drawHistory(ctx,subject.id,pageIndex,{ink,muted,line,accent,dark});pageTextures[pageIndex].needsUpdate=true;return;}
       if(!pageIndex){
-        [{label:'Ⅰ 發電機',action:'topic-generator',x:15,w:55,active:!thermal},{label:'Ⅱ 熱機',action:'topic-stirling',x:75,w:55,active:thermal},{label:'目錄 ↗',action:'contents',x:139,w:32}].forEach(b=>{ctx.fillStyle=b.active?(dark?'#526146':'#dce3c7'):paper;ctx.strokeStyle=line;ctx.lineWidth=.16;penBox(ctx,b.x,3,b.w,8);text(ctx,b.label,b.x+b.w/2,8.5,3.1,ink,{align:'center'});hitRegions.push({side:'left',x:b.x,y:2,w:b.w,h:10,kind:'button',action:b.action});});
+        text(ctx,subject.unit,15,8.5,3.1,muted);text(ctx,'第 '+String(state.bookPage+1).padStart(2,'0')+' 頁 / '+BOOK_SPREADS.length,171,8.5,3.0,muted,{align:'right'});
         text(ctx,ch.kicker,15,23,4.0,ink);text(ctx,ch.title,14,47,ch.title.length>=7?13.8:17,ink,{weight:600,spacing:.1});text(ctx,ch.subtitle,15,58,3.2,muted);
         text(ctx,ch.paragraphs[0],15,73,4.8,accent);wrap(ctx,ch.paragraphs[1],15,85,155,4.45,ink,7);
-        if(thermal){
+        if(bench){
+          const gov=subject.id==='governor',v=benchValues(state,p);
+          if(local===0){
+            const rows=gov?[['01','飛球與等長連桿','gov_balls'],['02','升降套筒與配重','gov_sleeve'],['03','止推環、撥叉與回授','gov_feedback'],['04','皮帶、馬達與主軸','gov_drive']]:[['01','圓盤與手推起轉柄','ed_disk'],['02','C 型磁軛與勵磁線圈','ed_magnet'],['03','磁極進給滑台','ed_carriage'],['04','開槽與局部渦電流','ed_slots']];
+            rows.forEach((r,i)=>{const y=115+i*11.7;if(selected===r[2]){ctx.fillStyle=dark?'#47533d':'#e1e6ca';ctx.fillRect(14,y-7,157,10.5);}text(ctx,r[0],16,y,3.4,accent);text(ctx,r[1],30,y,4,ink);text(ctx,'點選 ↗',168,y,2.8,muted,{align:'right'});rule(ctx,y+4,line);hitRegions.push({x:14,y:y-8,w:157,h:12,part:r[2]});});
+          }else if(local===1){
+            const eq=gov?['ω² = (1 + M/m)g / h','h = L cosθ','升程 = 2L(cosθ₀ − cosθ)']:['τ = −kω','P熱 = kω² ≥ 0','ω(t) = ω₀ e⁻⁽ᵏ⁺ᵇ⁾ᵗ⁄ᴶ'];
+            eq.forEach((q,i)=>text(ctx,q,16,117+i*17,i===2?5.4:6.5,i===1?ink:accent));text(ctx,gov?'θ = '+v.angle+' · 圓周項 '+v.force:'重疊 '+v.overlap+' · 慣量 '+fmt(p.inertia*1e6,1)+' ×10⁻⁶ kg·m²',16,165,3.1,muted);
+          }else if(local===2){
+            const q=benchPlot(state,p),x=48,y=157,w=118,h=43;ctx.strokeStyle=line;ctx.lineWidth=.2;penLine(ctx,x,y-h-3,x,y);penLine(ctx,x,y,x+w+2,y);text(ctx,q.ylabel,15,110,2.7,muted);text(ctx,q.xmax,165,164,2.7,muted,{align:'right'});text(ctx,q.ymax,16,122,3.5,ink);
+            for(const t of q.tracks){ctx.beginPath();t.points.forEach(([xx,yy],i)=>i?ctx.lineTo(x+xx*w,y-yy*h):ctx.moveTo(x+xx*w,y-yy*h));ctx.strokeStyle=t.color;ctx.lineWidth=.4;ctx.stroke();}const [xx,yy]=q.live;ctx.beginPath();ctx.arc(x+Math.max(0,Math.min(1,xx))*w,y-Math.max(0,Math.min(1,yy))*h,1.1,0,Math.PI*2);ctx.fillStyle=ink;ctx.fill();text(ctx,v.rpm,16,136,3.8,ink);text(ctx,gov?'● 即時升程':'赭：整片／青：開槽',16,151,2.6,accent);text(ctx,'轉速 / rpm',49,165,2.8,muted);
+          }else{
+            const rows=gov?[['即時轉速',v.rpm],['套筒升程',v.lift],['動力開度',v.opening]]:[['圓盤動能',v.kinetic],['渦電流熱',v.energy],['軸承耗散',v.bearing]];
+            rows.forEach((r,i)=>{const y=113+i*14;text(ctx,r[0],17,y,3.9,ink);text(ctx,r[1],168,y,4.7,i===1?accent:ink,{align:'right'});rule(ctx,y+5,line);});text(ctx,gov?'負載取得機械功 '+v.energy:'依熱容量計算溫升 '+v.rise,17,164,3.3,muted);
+          }
+        }else if(thermal){
           if(local===0){
             [['01','熱端與冷端氣缸','st_hot'],['02','雙活塞與相位曲柄','st_rods'],['03','飛輪與共用曲軸','st_flywheel'],['04','回熱器與連通管','st_regenerator']].forEach((r,i)=>{const y=115+i*11.7;if(selected===r[2]){ctx.fillStyle=dark?'#47533d':'#e1e6ca';ctx.fillRect(14,y-7,157,10.5);}text(ctx,r[0],16,y,3.4,accent);text(ctx,r[1],30,y,4,ink);text(ctx,'點選 ↗',168,y,2.8,muted,{align:'right'});rule(ctx,y+4,line);hitRegions.push({x:14,y:y-8,w:157,h:12,part:r[2]});});
           }else if(local===1){
@@ -248,26 +298,29 @@ export function createBook() {
         }
         }
         rule(ctx,171,line);
-        const settings=thermal?[{action:'hotC',label:'熱端溫度',value:state.hotC??320,min:120,max:500,step:10,y:180,unit:' °C'},{action:'coldC',label:'冷端溫度',value:state.coldC??25,min:15,max:110,step:5,y:191,unit:' °C'},{action:'brake',label:'煞車負載',value:state.brake??35,min:0,max:100,step:5,y:202,unit:'%'}]:[{action:'rpm',label:'手搖轉速',value:rpm,min:0,max:90,step:5,y:180,unit:' rpm'}, {action:'turns',label:'線圈匝數',value:turns,min:40,max:240,step:20,y:191,unit:' 匝'}, {action:'field',label:'磁場強度',value:field,min:.15,max:.9,step:.05,y:202,unit:' T'}];
+        const settings=parametersFor(state);
         settings.forEach((s,i)=>{const f=Math.max(0,Math.min(1,(s.value-s.min)/(s.max-s.min))),x=54+f*76;text(ctx,s.label,15,s.y+1.4,3.4,ink);ctx.strokeStyle=line;ctx.lineWidth=.45;penLine(ctx,54,s.y,130,s.y);text(ctx,(s.action==='field'?fmt(s.value):s.value)+s.unit,170,s.y+1.4,3.3,muted,{align:'right'});
           hitRegions.push({side:'left',x:49,y:s.y-4,w:87,h:9,kind:'slider',action:s.action,from:54,to:130,min:s.min,max:s.max,step:s.step});sliderThumbs[i].position.set(-191+x,1.8,s.y-122);
         });
         text(ctx,ch.answer,17,216,3.1,ink);text(ctx,ch.caption,15,225,2.6,muted);
-        text(ctx,chapter?'← 前頁':'物理之書',15,237,3.3,chapter?ink:muted);if(chapter)hitRegions.push({side:'left',x:10,y:230,w:37,h:12,kind:'button',action:'previous'});text(ctx,String(chapter*2+1).padStart(2,'0'),170,237,3.1,muted,{align:'right'});
+        text(ctx,chapter?'← 拖書角':'物理之書',35,237,3.0,chapter?ink:muted);if(chapter)hitRegions.push({side:'left',x:0,y:222,w:52,h:22,kind:'turn',action:'previous'});text(ctx,String(state.bookPage*2+1).padStart(2,'0'),170,237,3.1,muted,{align:'right'});
       }else{
         text(ctx,'Fig. '+String(chapter+1).padStart(2,'0'),170,24,4,ink,{align:'right'});text(ctx,ch.figure,170,32,4.2,ink,{align:'right'});
-        text(ctx,thermal?'p = '+fmt(p.pressure/1000,1)+' kPa':'ε = '+fmt(p.emf)+' V',16,24,5.6,accent);text(ctx,thermal?'飛輪 '+fmt(p.rpm,0)+' rpm':'線圈 '+p.rotorRpm+' rpm',16,32,3.5,muted);text(ctx,(thermal?'W輸出 = ':'E燈泡 = ')+fmt(p.energy.load,2)+' J',16,43,3.8,ink);
-        text(ctx,thermal?(state.section===false?'剖面：關閉 ○':'剖面：打開 ◎'):(state.showField===false?'磁場：隱藏 ○':'磁場：顯示 ◎'),170,43,3.3,muted,{align:'right'});hitRegions.push({side:'right',x:127,y:36,w:46,h:10,kind:'button',action:thermal?'section':'field-view'});text(ctx,state.showCharts===false?'即時圓柱：隱藏':'即時圓柱：顯示',170,54,3.2,muted,{align:'right'});hitRegions.push({side:'right',x:127,y:48,w:46,h:10,kind:'button',action:'chart-toggle'});
+        const values=measurementsFor(state,p),first=subject.id==='generator'?'ε = '+fmt(p.emf)+' V':subject.id==='stirling'?'p = '+fmt(p.pressure/1000,1)+' kPa':'n = '+fmt(p.rpm,0)+' rpm';
+        text(ctx,first,16,24,5.6,accent);text(ctx,subject.id==='generator'?'線圈 '+p.rotorRpm+' rpm':subject.id==='stirling'?'飛輪 '+fmt(p.rpm,0)+' rpm':subject.id==='governor'?'套筒升程 '+fmt(p.lift*1000,1)+' mm':'|τ| = '+fmt(Math.abs(p.torque)*1000,2)+' mN·m',16,32,3.5,muted);text(ctx,subject.id==='eddy'?'Q熱 = '+fmt(p.energy.heat,3)+' J':(thermal||bench?'W輸出 = ':'E燈泡 = ')+fmt(p.energy.load,2)+' J',16,43,3.8,ink);
+        const aux=subject.id==='generator'?{label:state.showField?'磁場：顯示 ◎':'磁場：隱藏 ○',action:'field-view'}:thermal?{label:state.section?'剖面：打開 ◎':'剖面：關閉 ○',action:'section'}:subject.id==='governor'?{label:state.govVectors?'向心項：顯示':'向心項：隱藏',action:'gov-vectors'}:{label:state.eddyMaterial==='copper'?'材質：銅 Cu':'材質：鋁 Al',action:'eddy-material'};
+        if(subject.id!=='eddy'){text(ctx,aux.label,170,43,3.3,muted,{align:'right'});hitRegions.push({side:'right',x:127,y:36,w:46,h:10,kind:'button',action:aux.action});}text(ctx,state.showCharts===false?'即時圓柱：隱藏':'即時圓柱：顯示',170,54,3.2,muted,{align:'right'});hitRegions.push({side:'right',x:127,y:48,w:46,h:10,kind:'button',action:'chart-toggle'});
         ctx.strokeStyle=line;ctx.lineWidth=.2;ctx.strokeRect(24,71,137,105);ctx.setLineDash([1.5,1.5]);ctx.beginPath();ctx.ellipse(93,119,34,43,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-        const detail=selected&&PARTS[selected];text(ctx,detail?detail.title:(thermal?(p.motion?'溫差作功，飛輪帶動負載':'點啟動，或拖動飛輪探索'):(p.motion?'正在把機械功轉成電能':'拖動搖柄，讓線圈開始轉')),16,166,3.4,detail?accent:muted);
-        const buttons=[{action:'popup',label:state.popupTarget>.5?'收回紙面 ↓':'圖解立起 ↗',active:state.popupTarget>.5},{action:'explode',label:state.explodeTarget>.55?'組裝':'分解',active:state.explodeTarget>.55},{action:'play',label:state.running?'暫停':thermal?'啟動熱機 ▷':'自動轉動 ▷',active:state.running}];
-        buttons.forEach((b,i)=>drawButton(ctx,b,15+i*52,172));
-        (thermal?[{action:'heater',label:state.heater===false?'加熱：關閉':'加熱：開啟',active:state.heater!==false},{action:'section',label:state.section===false?'剖面：關閉':'剖面：打開',active:state.section!==false},{action:'brake-release',label:state.brakeEngaged===false?'煞車：釋放':'煞車：作用',active:state.brakeEngaged!==false}]:[{action:'reverse',label:state.direction===-1?'轉向：反轉':'轉向：正轉',active:state.direction===-1},{action:'polarity',label:state.polarity===-1?'磁極：S → N':'磁極：N → S',active:state.polarity===-1},{action:'load',label:state.load?'負載：接通':'負載：開路',active:state.load}]).forEach((b,i)=>drawButton(ctx,b,15+i*52,190));
+        const detail=selected&&PARTS[selected];text(ctx,detail?detail.title:(bench?(p.motion?'實驗進行中，對照旁邊即時數據':'點書頁啟動，或選擇零件探索'):thermal?(p.motion?'溫差作功，飛輪帶動負載':'點啟動，或拖動飛輪探索'):(p.motion?'正在把機械功轉成電能':'拖動搖柄，讓線圈開始轉')),16,166,3.4,detail?accent:muted);
+        const startLabel=subject.id==='generator'?'自動轉動 ▷':thermal?'啟動熱機 ▷':subject.id==='governor'?'啟動調速器 ▷':'起轉後放手 ▷';
+        const buttons=[{action:'popup',label:state.popupTarget>.5?'收回紙面 ↓':'圖解立起 ↗',active:state.popupTarget>.5},{action:'explode',label:state.explodeTarget>.55?'組裝':'分解',active:state.explodeTarget>.55},{action:'play',label:state.running?'暫停':startLabel,active:state.running}];
+        buttons.forEach((b,i)=>drawButton(ctx,b,15+i*52,172));switchesFor(state).forEach((b,i)=>drawButton(ctx,b,15+i*(subject.id==='eddy'?39:52),190,subject.id==='eddy'?36:48));
         const ex=state.explodeTarget??0,x=46+ex*93;text(ctx,'拆解',15,214,3.6,ink);ctx.strokeStyle=line;ctx.lineWidth=.55;penLine(ctx,46,212,139,212);text(ctx,Math.round(ex*100)+'%',152,213.5,3.1,muted,{align:'right'});
         ctx.fillStyle='rgba(0,0,0,0)';ctx.strokeStyle=line;ctx.lineWidth=.25;penBox(ctx,159,205.5,12,12);text(ctx,'↺',165,214,6.5,ink,{align:'center'});
         hitRegions.push({side:'right',x:41,y:205,w:112,h:14,kind:'slider',action:'explode',from:46,to:139,min:0,max:1,step:.01});hitRegions.push({side:'right',x:158,y:203,w:15,h:17,kind:'button',action:'reset'});sliderThumbs[3].position.set(5+x,1.8,90);
-        text(ctx,ch.note,16,225,2.65,muted);text(ctx,String(chapter*2+2).padStart(2,'0'),180,237,2.5,muted,{align:'right'});text(ctx,'拖空白環視 · Shift 拖曳只轉教具',16,237,2.65,muted);text(ctx,chapter<CHAPTERS.length-1?(chapter===3?'熱機篇 →':'次頁 →'):'目錄 ↗',171,237,3.4,ink,{align:'right'});hitRegions.push({side:'right',x:143,y:230,w:34,h:12,kind:'button',action:chapter<CHAPTERS.length-1?'next':'contents'});
+        text(ctx,ch.note,16,225,2.65,muted);text(ctx,String(state.bookPage*2+2).padStart(2,'0'),132,237,2.5,muted,{align:'right'});text(ctx,'拖空白環視 · Shift 拖曳只轉教具',16,237,2.65,muted);text(ctx,state.bookPage<BOOK_SPREADS.length-1?'拖書角 →':'闔書 →',171,237,3.4,ink,{align:'right'});hitRegions.push({side:'right',x:134,y:222,w:52,h:22,kind:state.bookPage<BOOK_SPREADS.length-1?'turn':'button',action:state.bookPage<BOOK_SPREADS.length-1?'next':'book-fold'});
       }
+      if((pageIndex===0&&state.bookPage>0)||pageIndex===1){const right=pageIndex===1;ctx.fillStyle=dark?'#596348':'#e1dcc6';ctx.strokeStyle=line;ctx.lineWidth=.24;ctx.beginPath();ctx.moveTo(right?184:2,221);ctx.lineTo(right?163:23,242);ctx.lineTo(right?184:2,242);ctx.closePath();ctx.fill();ctx.stroke();ctx.strokeStyle=muted;penLine(ctx,right?174:12,233,right?179:7,237,.08);}
       pageTextures[pageIndex].needsUpdate=true;
     });
     flapCtx.setTransform(8,0,0,8,0,0);flapCtx.fillStyle=dark?'#3c4435':'#e8dfc9';flapCtx.fillRect(0,0,155,20);flapCtx.strokeStyle=line;flapCtx.lineWidth=.25;flapCtx.fillStyle='rgba(0,0,0,0)';penBox(flapCtx,1.1,1.1,152.8,17.8);
@@ -292,7 +345,7 @@ export function createBook() {
       a: sx[0] - center[0], b: sx[1] - center[1], c: sy[0] - center[0], d: sy[1] - center[1] };
   }
   return { group, pages: pageMeshes, flap, draw, hit, beginTurn, endTurn, materials: { coverMat, paperMat },
-    printPatch, attachRight(object){sideGroups[1].add(object);},
+    printPatch, setTurnDiagram(target){if(turnMesh){const mat=new THREE.MeshBasicMaterial({map:target.texture,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});const overlay=new THREE.Mesh(turnMesh.geometry,mat);overlay.renderOrder=4;turnMesh.add(overlay);turnDiagram={target,overlay};}else target.dispose();}, setTurnSnapshot(source){if(turnCanvas&&turnTexture){const ctx=turnCanvas.getContext('2d');ctx.clearRect(0,0,turnCanvas.width,turnCanvas.height);ctx.drawImage(source,0,0,turnCanvas.width,turnCanvas.height);turnTexture.needsUpdate=true;}}, attachRight(object){sideGroups[1].add(object);},
     setOpen(amount) { sideGroups[0].rotation.z = -Math.PI * (1 - amount); },
     setFlap(amount) { flap.rotation.x = -amount * 1.9; },
     turn(amount) {
@@ -301,7 +354,7 @@ export function createBook() {
     const a = Math.PI * amount, pos = turnMesh.geometry.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const u = turnDirection>0?turnOriginal[i * 3]+93:93-turnOriginal[i*3], z = turnOriginal[i * 3 + 2];
-      const angle = a + Math.sin(u / 186 * Math.PI) * Math.sin(a) * 0.18;
+      const angle = a + Math.sin(u / 186 * Math.PI) * Math.sin(a) * 0.22 + (z/244)*Math.sin(a)*.12;
       pos.setXYZ(i, turnDirection*(5 + u * Math.cos(angle)), 1.5 + u * Math.sin(angle) * 0.66, z);
     }
     pos.needsUpdate = true; turnMesh.geometry.computeVertexNormals();
