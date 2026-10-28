@@ -45,5 +45,12 @@
     "failures": [],
     "largestResidual": 2.5122126601218042e-12,
     "scope": "linear two-DOF base excitation, implicit-midpoint work/heat balance, parameter work, small-angle TMD and quarter-car about static preload; stopped at travel/contact limits, no impact/CFD/full building analysis"
+  },
+  "devices": {
+    "passed": true,
+    "checks": 115231,
+    "maxResidual": 4.956746124662459e-11,
+    "failures": [],
+    "scope": "linear electromechanical speaker and bounded illustrative aerodynamic curve with averaged direct-drive generator; no sound-pressure, CFD or commercial power-curve claim; camera is static anatomy"
   }
 }

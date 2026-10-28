@@ -1,10 +1,10 @@
 # 物理之書：機械與能量
 
-一本可以拆解、操作、翻閱的手繪 3D 物理實驗書。手搖發電機、史特靈熱機、離心調速器、渦電流煞車、建築阻尼球與汽車避震器共用同一本實體書、鏡頭、放大鏡、翻頁與即時量測架。
+一本可以拆解、操作、翻閱的手繪 3D 物理實驗書。手搖發電機、史特靈熱機、離心調速器、渦電流煞車、建築阻尼球、汽車避震器、喇叭、風力發電機與相機共用同一本實體書、鏡頭、放大鏡、翻頁系統；動態裝置共用即時量測架，相機只有靜態構造拆解。
 
-**[翻開全書](https://changyi123456.github.io/popup-physics-generator/)** · [發電機篇](https://changyi123456.github.io/popup-physics-generator/#generator-1) · [熱機篇](https://changyi123456.github.io/popup-physics-generator/#stirling-1) · [調速器篇](https://changyi123456.github.io/popup-physics-generator/#governor-1) · [渦電流篇](https://changyi123456.github.io/popup-physics-generator/#eddy-1) · [阻尼球篇](https://changyi123456.github.io/popup-physics-generator/#tmd-1) · [避震器篇](https://changyi123456.github.io/popup-physics-generator/#suspension-1) · [離線單檔](dist/index.html) · [MIT 授權](LICENSE)
+**[翻開全書](https://changyi123456.github.io/popup-physics-generator/)** · [發電機篇](https://changyi123456.github.io/popup-physics-generator/#generator-1) · [熱機篇](https://changyi123456.github.io/popup-physics-generator/#stirling-1) · [調速器篇](https://changyi123456.github.io/popup-physics-generator/#governor-1) · [渦電流篇](https://changyi123456.github.io/popup-physics-generator/#eddy-1) · [阻尼球篇](https://changyi123456.github.io/popup-physics-generator/#tmd-1) · [避震器篇](https://changyi123456.github.io/popup-physics-generator/#suspension-1) · [喇叭篇](https://changyi123456.github.io/popup-physics-generator/#speaker-1) · [風機篇](https://changyi123456.github.io/popup-physics-generator/#wind-1) · [相機篇](https://changyi123456.github.io/popup-physics-generator/#camera-1) · [離線單檔](dist/index.html) · [MIT 授權](LICENSE)
 
-![手繪立體阻尼球與即時圓柱量測](assets/preview.png)
+![手繪立體喇叭與即時圓柱量測](assets/preview.png)
 
 ## 一座機械一頁，後面接科學史
 
@@ -16,12 +16,15 @@
 | 7–8 | 渦電流煞車操作；阿拉戈、傅科與磁制動的科學史 |
 | 9–10 | 建築阻尼球操作；弗拉姆吸振器與高樓阻尼的科學史 |
 | 11–12 | 汽車避震器操作；彈簧與液壓阻尼器的科學史 |
+| 13–14 | 動圈式喇叭操作；電聲與磁路的科學史 |
+| 15–16 | 直驅風力發電機操作；風車與電力的科學史 |
+| 17–18 | 相機靜態構造拆解；光化學與數位攝影的科學史 |
 
-六座裝置各保留一個操作跨頁，共十二個實體跨頁。科學史是純紙面時間軸與原創概念手繪圖，不放立體機械、量測架或實驗控制；圖稿不是歷史原器復刻。點史料註記可讀文字與原始資料連結。
+九座裝置各保留一個構造跨頁，共十八個實體跨頁。科學史是純紙面時間軸與原創概念手繪圖，不放立體機械、量測架或實驗控制；圖稿不是歷史原器復刻。點史料註記可讀文字與原始資料連結。
 
-**拖右下書角往左翻、拖左下書角往右翻。** 紙張彎曲跟隨手勢；短拖會回彈，過半或快速甩動則完成。裝置先收回紙面，印在紙上的機械圖也跟著紙張翻走，翻到下一座時才立起。滑鼠與觸控共用此操作，左上角「目錄」可點選十二個實體書頁並跳頁，拖書角翻閱仍然保留。←／→ 與手機按鈕是替代控制。
+**拖右下書角往左翻、拖左下書角往右翻。** 紙張彎曲跟隨手勢；短拖會回彈，過半或快速甩動則完成。裝置先收回紙面，印在紙上的機械圖也跟著紙張翻走，翻到下一座時才立起。滑鼠與觸控共用此操作，左上角「目錄」可點選十八個實體書頁並跳頁，拖書角翻閱仍然保留。←／→ 與手機按鈕是替代控制。
 
-閱讀模式保留原本十六節，新增兩部各四節，共 24 節；其小節選擇與實體書的十二頁順序分開。參數、物理相位及累積能量按裝置保留。新開啟從發電機開始；`#governor-1` 直達調速器，`#governor-history` 直達其科學史；舊的 `#stirling-2` 等片段保留對應閱讀小節。
+閱讀模式保留前六部內容，新增三部各四節，共 36 節；其小節選擇與實體書的十八頁順序分開。參數、物理相位及累積能量按裝置保留。新開啟從發電機開始；`#governor-1` 直達調速器，`#governor-history` 直達其科學史；舊的 `#stirling-2` 等片段保留對應閱讀小節。
 
 ## 可以親手做什麼
 
@@ -33,7 +36,10 @@
 - 渦電流：手推圓盤後放手滑行，調磁場與磁極位置，對照整片／開槽圓盤、鋁／銅材質。磁極移開則無磁制動；開槽和材質更換先停轉並清除該次能量。
 - 阻尼球：調激振頻率、調諧頻率比與球阻尼比；切換振台、鎖定歸零重測，或輕推樓層。四索擺長與雙側阻尼器共同作動。
 - 避震器：調路面頻率、彈簧剛度與阻尼；切平路看自由衰減，旁通阻尼或剖開筒身看活塞與閥片，也可壓一下車身。
-- 右側書邊的立體圓柱面向裝置。發電機顯示 Φ、ε、P；熱機顯示 p、V、機械負載功率；調速器顯示轉速、升程與動力開度；渦電流顯示轉速、制動力矩與發熱功率。阻尼球顯示樓層位移、球相對行程與耗散功率；避震器顯示車身加速度、懸吊行程與耗散功率。底部同步累積輸出或耗散能量。
+- 喇叭：改訊號頻率、電壓與磁路強度，交換接線、切斷訊號觀察衰減；剖面可看音圈、磁隙、振膜、懸邊與彈波。
+- 風機：直驅一對一轉動，改風速、槳距與電阻；可開路、停風滑行或施加煞車，查看剖開機艙內的固定線圈與轉動磁鐵。
+- 相機：無反光鏡原創構造，拆開鏡組、固定光圈、快門、感光元件、電路板、電池和機殼；只有靜態構造與零件說明，沒有運轉、曝光模擬或即時量測柱。
+- 右側書邊的立體圓柱面向裝置。發電機顯示 Φ、ε、P；熱機顯示 p、V、機械負載功率；調速器顯示轉速、升程與動力開度；渦電流顯示轉速、制動力矩與發熱功率。阻尼球顯示樓層位移、球相對行程與耗散功率；避震器顯示車身加速度、懸吊行程與耗散功率。喇叭顯示音圈電流、振膜位移與線圈發熱；風機顯示迎風、軸與電力三種功率。底部同步累積輸出或耗散能量。相機頁不顯示量測架。
 - 放大鏡可檢視實際書頁和零件；紙上問答可掀開。手機提供可讀文字與原生控制；無 WebGL 時保留各篇結構示意與讀本。
 
 拖空白處環視；Shift 拖曳只旋轉教具；滾輪縮放。「立體數據」同時近看裝置與量測架。原生替代控制都在閱讀模式內。
@@ -42,7 +48,7 @@
 
 ## 快速開始
 
-下載後直接以現代瀏覽器開啟 `dist/index.html`。約 7.7 MB 的離線單檔已內嵌 Three.js、完整繁中手寫字型、程式與六篇向量備援圖，不需外部資源。
+下載後直接以現代瀏覽器開啟 `dist/index.html`。約 7.8 MB 的離線單檔已內嵌 Three.js、完整繁中手寫字型、程式與九篇向量備援圖，不需外部資源。
 
 開發需 Node.js 20 以上與 Python 3，不需安裝 npm 依賴：
 
@@ -124,13 +130,23 @@ k ∝ B² × 導電率 × 厚度 × 磁極交集面積矩 × 開槽係數
 
 超出小角度／樓層行程，或避震器60 mm相對行程／接地限制時停止並提示重設；未模擬撞擊。閱讀模式的頻率響應曲線是穩態峰值，圓點是瞬時值；兩者明確區分。
 
+## 喇叭、風機與相機
+
+喇叭聯立RL電路與質量／彈簧／阻尼模型，同一Bl產生力與反電動勢。12 g振動質量、60 Hz固有頻率、6 Ω音圈、0.35 mH電感、Bl=3.2 N/A與Rm=1.1 N·s/m為原創示意參數。隱式中點法核對電磁／機械儲能、音圈熱與機械／聲學等效耗散。以0.015倍時間、位移×6顯示；讀值保留物理單位，不提供聲壓或音量。切斷訊號後保留衰減。
+
+風機半徑0.6 m、J=0.18 kg·m²、ke=0.35、內阻0.7 Ω，採固定迎風的直驅平均整流模型。`P風=½ρAv³`，`λ=Rω/v`，`Cp=λCq`，其中`Cq=0.1 cos(β)^4/[1+(λ/6.58)^4]`為有界教學曲線，非實測功率曲線、CFD或葉素動量解。`Jω̇=τ風−keI−bω−τ煞`、`I=keω/(Re+RL)`；開路輸出為零，停風後仍可能從轉子動能暫時發電。0.12倍時間演示，追蹤軸輸入、負載電能、銅損、軸承、煞車與轉子儲能。
+
+相機只有原創靜態解剖：六片鏡片、三個鏡室、七片固定光圈、接環、機械快門示意、36×24 mm感光平面、處理板、EVF、LCD與電池／記憶卡。不是光學處方，不模擬成像、對焦、曝光或所有無反相機的共通內部構造。模型不隨時間變化；可手動環視、剖開與拆解，沒有運轉按鈕、Space啟動或量測柱。每個題材後面均有純紙面科學史與來源。
+
 ## 驗證範圍
 
-`node build.mjs --audit` 驗證發電機 2,416 項條件、熱機 3,614 項條件，調速器 1,088 項、渦電流 2,894 項，加上振動10,814項，共20,826項物理條件，以及實際 WebGL 幾何的 361 個線圈／齒輪姿態、721 個熱機連桿端點姿態、361 個調速連桿與固定尺／支柱間隙姿態與 244 個圓盤軸／滑台姿態。熱機檢查固定氣體總量、體積導數、定長連桿、每圈能量平衡、等溫零淨功、理想效率上限及飛輪離散能量收支。
+`node build.mjs --audit` 驗證發電機 2,416 項條件、熱機 3,614 項條件，調速器 1,088 項、渦電流 2,894 項，加上振動10,814項，共20,826項物理條件；新喇叭與風機另有115,231項，合計136,057項物理條件，以及實際 WebGL 幾何的 361 個線圈／齒輪姿態、721 個熱機連桿端點姿態、361 個調速連桿與固定尺／支柱間隙姿態與 244 個圓盤軸／滑台姿態。熱機檢查固定氣體總量、體積導數、定長連桿、每圈能量平衡、等溫零淨功、理想效率上限及飛輪離散能量收支。
 
 阻尼球／避震器另通過3,109項原生幾何與動態條件，含604姿態、99組參數、無阻尼超限停機、自由衰減及時域／頻域對照。最大實際懸索端點誤差約3.3e−13 world units，活塞最小內部行程餘量14 world units。
 
-六部均為教學幾何。這些檢查不等同全機的掃掠碰撞、製造公差或實機性能驗證。
+新三部另檢查原生頂點緩衝長度、喇叭頸圈／懸邊接合、風機軸相位／葉片對塔柱間隙、相機光軸／承載接觸與時間不變性，詳見`device-geometry-audit.json`。
+
+九部均為教學幾何。這些檢查不等同全機的掃掠碰撞、製造公差或實機性能驗證。
 
 ## 共用架構
 
@@ -141,14 +157,25 @@ k ∝ B² × 導電率 × 厚度 × 磁極交集面積矩 × 開槽係數
 - `src/eddy-model.js`／`src/eddy.js`：渦電流阻尼、材料與缺口慣量、磁隙滑台。
 - `src/vibration-model.js`／`src/tmd.js`／`src/suspension.js`：耦合振動、能量收支及兩座新試驗台。
 - `src/vibration-kit.js`／`src/vibration-audit.js`：變節距彈簧、彈性柱、懸索及原生接點驗證。
+- `src/devices-model.js`／`src/speaker.js`／`src/wind.js`／`src/camera.js`：喇叭機電耦合、風機平均模型與相機靜態構造。
+- `src/device-kit.js`／`src/device-audit.js`：封閉剖面、可變形懸吊、真實開孔與原生幾何驗證。
 - `src/machine-kit.js`：新裝置共用的手繪原生實體零件。
 - `src/book.js`：唯一一套曲面紙張、印刷控制、問答紙片與雙向翻頁。
 - `src/charts.js`：共用的右頁折出量測架與動態圓柱。
 - `src/main.js`：共用場景、當前裝置、狀態、鏡頭與手勢。
 - `src/ink.js`／`src/lens.js`：手繪材質與實際畫面放大鏡。
-- `build.mjs`：離線打包、六篇備援圖與模型／幾何驗證。
+- `build.mjs`：離線打包、九篇備援圖與模型／幾何驗證。
 
 ## 來源與授權
+
+- [Eminence：喇叭構造與懸吊](https://eminence.com/pages/how-speakers-work)
+- [Klippel：線性電聲參數](https://www.klippel.de/fileadmin/klippel/Bilder/Know-How/Literature/Papers/Fast_and_Accurate_Linear_Parameter_Measurement_01.pdf)
+- [DOE：風機內部與直驅](https://www.energy.gov/cmei/systems/explore-wind-turbine-text-version)
+- [DOE：小型風力與葉尖速比](https://www.energy.gov/cmei/systems/windexchange/small-wind-guidebook)
+- [Nikon：無反相機各部件](https://chsv-origin-onlinemanual.nikonimglib.com/z7_z6/en-nsg/02_getting_to_know_the_camera_01.html)
+- [Canon：快門架構差異](https://www.usa.canon.com/learning/training-articles/training-articles-list/a-look-at-the-shutter-modes-in-canon-eos-cameras)
+
+新三篇科學史的原專利、博物館、EIA、Kodak與攝影檔案來源亦列於書頁的史料對話框。
 
 - [Frahm 原始動態吸振專利 US989958A](https://patents.google.com/patent/US989958A/en)
 - [台北101官方：風阻尼球構造與目的](https://www.taipei-101.com.tw/tw/observatory/feature/scenery)

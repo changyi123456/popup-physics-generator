@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": 2274,
+  "poses": 320,
+  "bom": {
+    "speaker": 96,
+    "wind": 164,
+    "camera": 167
+  },
+  "minMagneticGap": 0.5500000000000004,
+  "maxDriveError": 5.16191365590357e-8,
+  "maxResidual": 1.4779288903810084e-12,
+  "failures": [],
+  "scope": "native coil/cone/surround joins, wind shaft phase and blade/tower z envelope, camera optical axes/support/static transforms, finite exploded states and selected physics agreement; not a complete swept-solid collision proof or optical design validation"
+}

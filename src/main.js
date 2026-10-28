@@ -1,10 +1,14 @@
 import * as THREE from "./vendor/three.module.js";
 import { SPEC, energyStep, fmt, smooth, follow, clamp, auditModel } from "./model.js";
-import { CHAPTERS, PARTS, SUBJECTS, BOOK_SPREADS, HISTORIES, subjectAt, partsFor, sample, parametersFor, switchesFor, measurementsFor, benchValues, benchPlot, vibrationValues, vibrationPlot } from "./library.js";
+import { CHAPTERS, PARTS, SUBJECTS, BOOK_SPREADS, HISTORIES, subjectAt, partsFor, sample, parametersFor, switchesFor, measurementsFor, benchValues, benchPlot, vibrationValues, vibrationPlot, deviceValues, devicePlot } from "./library.js";
 import { ST_SPEC, stSample, stThermo, stAdvance, stNudge, auditStirling } from "./stirling-model.js";
 import { G_SPEC, govAdvance, auditGovernor } from "./governor-model.js";
 import { E_SPEC, eddySample, eddyAdvance, eddyKick, auditEddy } from "./eddy-model.js";
 import { VIBRATION_SPEC, vibrationAdvance, vibrationSet, vibrationNudge, vibrationReset, auditVibrations } from './vibration-model.js';
+import { SP_SPEC, WIND_SPEC, speakerAdvance, windAdvance, deviceReset, deviceSet, auditDevices } from './devices-model.js';
+import { createSpeaker } from './speaker.js';
+import { createWind } from './wind.js';
+import { createCamera } from './camera.js';
 import { createTmd } from './tmd.js';
 import { createSuspension } from './suspension.js';
 import { createGovernor } from "./governor.js";
@@ -20,9 +24,9 @@ const $ = selector => document.querySelector(selector);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let rememberedTheme = "light";
 try { rememberedTheme = localStorage.getItem("generator-book:theme") || "light"; } catch {}
-const initialHash=location.hash.match(/^#(generator|stirling|governor|eddy|tmd|suspension)(?:-([1-4]|history))?$/),initialSubject=SUBJECTS.find(s=>s.id===initialHash?.[1])||SUBJECTS[0],initialChapter=initialSubject.start+(initialHash?.[2]==='history'?0:Number(initialHash?.[2]??1)-1);
+const initialHash=location.hash.match(/^#(generator|stirling|governor|eddy|tmd|suspension|speaker|wind|camera)(?:-([1-4]|history))?$/),initialSubject=SUBJECTS.find(s=>s.id===initialHash?.[1])||SUBJECTS[0],initialChapter=initialSubject.start+(initialHash?.[2]==='history'?0:Number(initialHash?.[2]??1)-1);
 const state = {
-  tmdFrequency:.95,tmdTune:95,tmdDamping:14,tmdDrive:true,tmdLocked:false,suspFrequency:1.5,suspStiffness:16000,suspDamping:1800,suspRoad:true,suspDamper:true,suspSection:true,chapter: initialChapter,bookPage:SUBJECTS.indexOf(initialSubject)*2+(initialHash?.[2]==='history'?1:0),history:initialHash?.[2]==='history',govSupply:85,govLoad:12,govMass:180,govFeedback:true,govStep:false,govVectors:true,govOmega:0,govTheta:G_SPEC.thetaMin,govVelocity:0,govEnergy:{load:0,input:0,loss:0},eddyRpm:240,eddyField:.45,eddyInsertion:20,eddyMagnet:true,eddySlots:false,eddyMaterial:'aluminum',eddyShowFlow:true,eddyDirection:1,eddyOmega:0,eddyElapsed:0,eddyEnergy:{heat:0,bearing:0,input:0},pageTurnProgress:0, hotC:320,coldC:25,brake:35,heater:true,section:true,brakeEngaged:true,stOmega:0,stEnergy:{gas:0,load:0,friction:0,kick:0}, rpm: 40, turns: 120, field: .45, direction: 1, polarity: 1, load: true, showField: true, manualActive: false, showCharts: true, energy: {load:0,copper:0,input:0}, theme: rememberedTheme,
+  speakerFrequency:60,speakerVoltage:1.4,speakerField:100,speakerSignal:true,speakerPolarity:1,speakerSection:true,windSpeed:8,windPitch:0,windLoad:4,windEnabled:true,windConnected:true,windBrake:false,windSection:true,cameraSection:true,tmdFrequency:.95,tmdTune:95,tmdDamping:14,tmdDrive:true,tmdLocked:false,suspFrequency:1.5,suspStiffness:16000,suspDamping:1800,suspRoad:true,suspDamper:true,suspSection:true,chapter: initialChapter,bookPage:SUBJECTS.indexOf(initialSubject)*2+(initialHash?.[2]==='history'?1:0),history:initialHash?.[2]==='history',govSupply:85,govLoad:12,govMass:180,govFeedback:true,govStep:false,govVectors:true,govOmega:0,govTheta:G_SPEC.thetaMin,govVelocity:0,govEnergy:{load:0,input:0,loss:0},eddyRpm:240,eddyField:.45,eddyInsertion:20,eddyMagnet:true,eddySlots:false,eddyMaterial:'aluminum',eddyShowFlow:true,eddyDirection:1,eddyOmega:0,eddyElapsed:0,eddyEnergy:{heat:0,bearing:0,input:0},pageTurnProgress:0, hotC:320,coldC:25,brake:35,heater:true,section:true,brakeEngaged:true,stOmega:0,stEnergy:{gas:0,load:0,friction:0,kick:0}, rpm: 40, turns: 120, field: .45, direction: 1, polarity: 1, load: true, showField: true, manualActive: false, showCharts: true, energy: {load:0,copper:0,input:0}, theme: rememberedTheme,
   popup: reduced&&initialHash?.[2]!=='history' ? 1 : 0, popupTarget: initialHash?.[2]==='history'?0:1, explode: 0, explodeTarget: 0,
   running: false, phase: initialSubject.id==='stirling'?2:.8, yaw: 0, yawTarget: 0, zoom: 1, zoomTarget: 1,
   selected: null, touchedAt: performance.now(), turning: false, open: reduced ? 1 : 0, bookOpenTarget: 1,
@@ -34,9 +38,11 @@ const state = {
 };
 document.body.dataset.theme = state.theme;
 await document.fonts.load('400 18px "Book Hand"');
-const machines={generator:createGenerator(),stirling:createStirling(),governor:createGovernor(),eddy:createEddy(),tmd:createTmd(),suspension:createSuspension()},book=createBook(),chart=createDataCharts(),scene=new THREE.Scene();
-let machine=machines[subjectAt(state.chapter).id];const subjectPhases={generator:.8,stirling:2,governor:.8,eddy:.8,tmd:0,suspension:0};
+const machines={generator:createGenerator(),stirling:createStirling(),governor:createGovernor(),eddy:createEddy(),tmd:createTmd(),suspension:createSuspension(),speaker:createSpeaker(),wind:createWind(),camera:createCamera()},book=createBook(),chart=createDataCharts(),scene=new THREE.Scene();
+let machine=machines[subjectAt(state.chapter).id];const subjectPhases={generator:.8,stirling:2,governor:.8,eddy:.8,tmd:0,suspension:0,speaker:0,wind:0,camera:0};
 const subjectId=()=>subjectAt(state.chapter).id;
+const isDevice=()=>['speaker','wind','camera'].includes(subjectId());
+const isTall=()=>isVibration()||subjectId()==='wind';
 const isVibration=()=>['tmd','suspension'].includes(subjectId());
 function activateMachine(){const id=subjectAt(state.chapter).id;machine=machines[id];for(const [key,m] of Object.entries(machines))m.root.visible=key===id&&!state.history;}
 activateMachine();
@@ -118,11 +124,12 @@ const viewProfiles = {
 let introSkipped = reduced;
 function setView(name) {
   const p = {...viewProfiles[name]}; if (!viewProfiles[name]) return; hideLens();
-  if(isVibration()){if(name==='book'&&!state.history){p.y=36;p.r=760;}if(name==='mechanism'){p.y=88;p.r=420;p.yaw=-.42;}if(name==='charts'){p.y=70;p.r=535;p.yaw=-.62;}}
+  if(isTall()){if(name==='book'&&!state.history){p.y=36;p.r=760;}if(name==='mechanism'){p.y=88;p.r=420;p.yaw=-.42;}if(name==='charts'){p.y=70;p.r=535;p.yaw=-.62;}}
+  if(isDevice()&&name==='mechanism'){p.y=subjectId()==='wind'?85:65;p.r=subjectId()==='wind'?430:350;p.yaw=-.35;}
   if(subjectId()==='stirling'||subjectId()==='governor'){if(name==='mechanism'){p.y=subjectId()==='governor'?65:58;p.r=350;p.yaw=-.55;}if(name==='charts'){p.y=50;p.r=460;p.yaw=-.62;}}if(subjectId()==='eddy'&&name==='mechanism'){p.y=48;p.r=310;p.yaw=.12;}
   state.view = name; state.targetToX = p.x; state.targetToY = p.y; state.targetToZ = p.z;
   state.cameraRadiusTarget = p.r; state.cameraElevationTarget = p.elevation; state.cameraYawTarget = p.yaw;
-  if (name === "mechanism") { state.targetToY = (isVibration()?88:subjectId()==='governor'?65:subjectId()==='stirling'?58:43) + 42 * state.explodeTarget; state.cameraRadiusTarget = (isVibration()?420:subjectId()==='governor'?350:subjectId()==='stirling'?330:subjectId()==='eddy'?310:290) + 135 * state.explodeTarget; }
+  if (name === "mechanism") { state.targetToY = (isTall()?88:isDevice()?65:subjectId()==='governor'?65:subjectId()==='stirling'?58:43) + (isDevice()?20:42) * state.explodeTarget; state.cameraRadiusTarget = (isTall()?430:isDevice()?350:subjectId()==='governor'?350:subjectId()==='stirling'?330:subjectId()==='eddy'?310:290) + 135 * state.explodeTarget; }
   if (innerWidth < 700) { state.targetToX=name==='book'?25:name==='charts'?145:name==='reading'?-80:99; state.targetToY = name === "book" ? 35 : p.y; state.cameraRadiusTarget = name === "book" ? 1200 : name === "reading" ? 380 : name === "charts" ? 850 : 420; state.cameraElevationTarget = name === "reading" ? 1.1 : 0.7; }
   else if (name !== "mechanism") {
     const rect = canvas.getBoundingClientRect();
@@ -136,7 +143,7 @@ function resize() {
   camera.aspect = aspect;
   camera.updateProjectionMatrix(); renderer?.setSize(box.width, box.height, false);
   if (phone && state.view === "book") { state.targetToX=25;state.targetToY=30;state.targetToZ=0;state.cameraRadiusTarget=1200; }
-  else if (!phone && state.view !== "mechanism") {const tall=isVibration()&&!state.history&&state.view==="book";state.cameraRadiusTarget=(tall?760:isVibration()&&state.view==="charts"?535:viewProfiles[state.view].r)*Math.max(1,1.5/aspect);if(tall)state.targetToY=36;}
+  else if (!phone && state.view !== "mechanism") {const tall=isTall()&&!state.history&&state.view==="book";state.cameraRadiusTarget=(tall?760:isVibration()&&state.view==="charts"?535:viewProfiles[state.view].r)*Math.max(1,1.5/aspect);if(tall)state.targetToY=36;}
   if (phone && renderer) key.shadow.mapSize.set(1024, 1024);
   renderOnce();
 }
@@ -165,6 +172,7 @@ function touch() { state.touchedAt = performance.now(); introSkipped = true; }
 function accumulateEnergy(from,to,seconds){const step=energyStep(state,from,to,seconds);for(const key of ['load','copper','input'])state.energy[key]+=step[key];}
 function liveValues() {
  const p=sample(state);
+ if(isDevice()){const values=deviceValues(state,p);for(const e of $$('[data-device-live]'))e.textContent=values[e.dataset.deviceLive]??'';const dot=$('#reader-device-dot');if(dot){const q=devicePlot(state,p);dot.setAttribute('cx',String(75+clamp(q.live[0],0,1)*470));dot.setAttribute('cy',String(245-clamp(q.live[1],0,1)*185));}return;}
  if(isVibration()){const values=vibrationValues(state,p);for(const e of $$('[data-vibration-live]'))e.textContent=values[e.dataset.vibrationLive]??'';const dot=$('#reader-vibration-dot');if(dot){const q=vibrationPlot(state,p);dot.setAttribute('cx',String(75+clamp(q.live[0],0,1)*470));dot.setAttribute('cy',String(245-clamp(q.live[1],0,1)*185));}return;}
  if(subjectId()==='governor'||subjectId()==='eddy'){const v=benchValues(state,p);for(const e of document.querySelectorAll('[data-bench-live]'))e.textContent=v[e.dataset.benchLive]??'';const dot=$('#reader-bench-dot');if(dot){const q=benchPlot(state,p);dot.setAttribute('cx',String(75+clamp(q.live[0],0,1)*470));dot.setAttribute('cy',String(245-clamp(q.live[1],0,1)*185));}return;}
  if(subjectId()==='stirling'){const values={pressure:fmt(p.pressure/1000,1)+' kPa',volume:fmt(p.volume*1e6,2)+' mL',power:fmt(p.loadPower,3)+' W',rpm:fmt(p.rpm,0)+' rpm',energy:fmt(p.energy.load,3)+' J',gasPower:fmt(p.gasPower,3)+' W',friction:fmt(p.frictionPower,3)+' W',kinetic:fmt(p.kinetic,3)+' J',angle:fmt(((state.phase%(2*Math.PI)+2*Math.PI)%(2*Math.PI))*180/Math.PI,0)+'°'};for(const e of document.querySelectorAll('[data-st-live]'))e.textContent=values[e.dataset.stLive]??'';const dot=$('#reader-pv-dot');if(dot){dot.setAttribute('cx',String(70+(p.volume-p.cycle.minV)/(p.cycle.maxV-p.cycle.minV)*460));dot.setAttribute('cy',String(250-(p.pressure-p.cycle.minP)/(p.cycle.maxP-p.cycle.minP)*190));}return;}
@@ -176,23 +184,24 @@ function liveValues() {
 }
 function paint() {
  const id=subjectId(),thermal=id==='stirling',bench=id==='governor'||id==='eddy',p=sample(state),ch=CHAPTERS[subjectAt(state.chapter).start],hist=HISTORIES[id];
- $('#scene').setAttribute('aria-label',state.history?hist.kicker+'，純紙面手繪圖與時間軸；拖書角翻頁':'攤開的手繪物理書，'+subjectAt(state.chapter).title+'從右頁立起，旁邊有即時圓柱；拖書角翻頁');document.body.dataset.history=String(state.history);for(const e of $$("[data-view='mechanism'],[data-view='charts']"))e.disabled=state.history||!webgl;
+ $('#scene').setAttribute('aria-label',state.history?hist.kicker+'，純紙面手繪圖與時間軸；拖書角翻頁':'攤開的手繪物理書，'+subjectAt(state.chapter).title+(id==='camera'?'從右頁立起，可選取與拆解；拖書角翻頁':'從右頁立起，旁邊有即時圓柱；拖書角翻頁'));document.body.dataset.history=String(state.history);for(const e of $$("[data-view='mechanism'],[data-view='charts']"))e.disabled=state.history||!webgl||(id==='camera'&&e.dataset.view==='charts');
  document.body.dataset.subject=id;document.title='物理之書 — '+subjectAt(state.chapter).title;
- for(const [key,cls] of Object.entries({generator:'.generator-controls',stirling:'.thermal-controls',governor:'.governor-controls',eddy:'.eddy-controls',tmd:'.tmd-controls',suspension:'.suspension-controls'}))$$(cls).forEach(e=>e.hidden=key!==id);
+ for(const [key,cls] of Object.entries({generator:'.generator-controls',stirling:'.thermal-controls',governor:'.governor-controls',eddy:'.eddy-controls',tmd:'.tmd-controls',suspension:'.suspension-controls',speaker:'.speaker-controls',wind:'.wind-controls',camera:'.camera-controls'}))$$(cls).forEach(e=>e.hidden=key!==id);
  book.draw(state);paintContents();
  $('#popup').setAttribute('aria-pressed',String(state.popupTarget>.5));$('#popup span').textContent=state.popupTarget>.5?'收回紙面':'浮出圖解';
  $('#explode').setAttribute('aria-pressed',String(state.explodeTarget>.55));$('#explode span').textContent=state.explodeTarget>.55?'組裝':'分解';
- $('#play').setAttribute('aria-pressed',String(state.running));$('#play span').textContent=state.running?'暫停':({generator:'自動轉動',stirling:'啟動熱機',governor:'啟動調速器',eddy:'起轉後放手',tmd:'啟動振台',suspension:'啟動路面'})[id];$('#play use').setAttribute('href',state.running?'#i-pause':'#i-play');
+ $('#play').hidden=id==='camera';$('#chart-toggle').hidden=id==='camera';
+ $('#play').setAttribute('aria-pressed',String(state.running));$('#play span').textContent=state.running?'暫停':({generator:'自動轉動',stirling:'啟動熱機',governor:'啟動調速器',eddy:'起轉後放手',tmd:'啟動振台',suspension:'啟動路面',speaker:'接通訊號',wind:'啟動風機',camera:'靜態構造'})[id];$('#play use').setAttribute('href',state.running?'#i-pause':'#i-play');
  $('#explode-range').value=Math.round(state.explodeTarget*100);$('#explode-label').textContent=Math.round(state.explodeTarget*100)+'%';
  for(const q of parametersFor(state)){const input=$('#'+q.action);if(input)input.value=state[q.action];const out=$('#'+q.action+'-label');if(out)out.textContent=(q.step<1?fmt(state[q.action]):state[q.action])+q.unit;}
  for(const q of switchesFor(state)){const b=$('#'+q.action);if(b){b.textContent=q.label;b.setAttribute('aria-pressed',String(q.active));}}
  $('#field-view').setAttribute('aria-pressed',String(state.showField));$('#section').textContent=state.section?'剖面：打開':'剖面：關閉';$('#section').setAttribute('aria-pressed',String(state.section));$('#chart-toggle').setAttribute('aria-pressed',String(state.showCharts));$('#eddy-material').textContent=state.eddyMaterial==='copper'?'材質：銅 Cu':'材質：鋁 Al';
- $('#time-scale').textContent=isVibration()?'0.4 倍時間演示；暫停凍結物理時間，調參作功另外記帳。':id==='generator'?'0.18 倍時間演示；讀值為物理轉速。':id==='stirling'?'0.24 倍時間演示；啟動含手推起轉，轉速由溫差與負載決定。':id==='governor'?'0.24 倍時間演示；旋轉與套筒共同作動，回授不代表完全恆速。':'0.24 倍時間演示；手推後自然減速，發熱不誇大為高溫。';
+ $('#time-scale').textContent=id==='camera'?'靜態構造 · 只做剖面、選取與拆解。':id==='speaker'?'0.015 倍時間演示，位移×6；讀值保留物理單位。':id==='wind'?'0.12 倍時間演示；直驅1:1，保留轉子慣性。':isVibration()?'0.4 倍時間演示；暫停凍結物理時間，調參作功另外記帳。':id==='generator'?'0.18 倍時間演示；讀值為物理轉速。':id==='stirling'?'0.24 倍時間演示；啟動含手推起轉，轉速由溫差與負載決定。':id==='governor'?'0.24 倍時間演示；旋轉與套筒共同作動，回授不代表完全恆速。':'0.24 倍時間演示；手推後自然減速，發熱不誇大為高溫。';
  $('#page-number').textContent=String(state.bookPage+1).padStart(2,'0')+' / '+BOOK_SPREADS.length;$('#previous').disabled=state.bookPage===0;$('#next').disabled=state.bookPage===BOOK_SPREADS.length-1;
  $('#chapter-caption').textContent=state.history?hist.kicker:ch.kicker;
  const detail=state.selected&&PARTS[state.selected];$('#status').textContent=state.history?hist.kicker+' · 拖書角繼續翻閱':p.halted?p.halted:detail?detail.title:subjectAt(state.chapter).title+' · '+(state.running?'實驗進行中':'拖右下書角翻頁 · 直接點書頁操作');
  paintReader();
- const live=isVibration()?(id==='tmd'?'樓層 <span data-vibration-live="building"></span><br>球相對行程 <span data-vibration-live="ball"></span>':'車身加速度 <span data-vibration-live="acceleration"></span><br>懸吊行程 <span data-vibration-live="travel"></span>'):bench?'轉速 <span data-bench-live="rpm"></span><br>'+(id==='governor'?'套筒升程 <span data-bench-live="lift"></span>':'發熱功率 <span data-bench-live="power"></span>'):thermal?'轉速 <span data-st-live="rpm"></span><br>機械輸出 <span data-st-live="power"></span>':state.rpm+' rpm → 線圈 '+p.rotorRpm+' rpm<br>感應電壓 <span data-live="emf"></span>';
+ const live=isDevice()?(id==='camera'?'靜態構造 · 剖面與拆解':id==='speaker'?'音圈 <span data-device-live="current"></span><br>振膜 <span data-device-live="displacement"></span>':'轉速 <span data-device-live="rpm"></span><br>電力 <span data-device-live="power"></span>'):isVibration()?(id==='tmd'?'樓層 <span data-vibration-live="building"></span><br>球相對行程 <span data-vibration-live="ball"></span>':'車身加速度 <span data-vibration-live="acceleration"></span><br>懸吊行程 <span data-vibration-live="travel"></span>'):bench?'轉速 <span data-bench-live="rpm"></span><br>'+(id==='governor'?'套筒升程 <span data-bench-live="lift"></span>':'發熱功率 <span data-bench-live="power"></span>'):thermal?'轉速 <span data-st-live="rpm"></span><br>機械輸出 <span data-st-live="power"></span>':state.rpm+' rpm → 線圈 '+p.rotorRpm+' rpm<br>感應電壓 <span data-live="emf"></span>';
  $('#mobile-chapter').innerHTML='<div class="mobile-unit">'+subjectAt(state.chapter).unit+' · '+(state.bookPage+1)+' / '+BOOK_SPREADS.length+'</div><h1>'+ch.title+'</h1><div class="english">'+ch.subtitle+'</div><p>'+ch.paragraphs[1]+'</p><div class="mobile-ratio">'+live+'</div>';
  $('#mobile-page-label').textContent=(state.bookPage+1)+' / '+BOOK_SPREADS.length;$('#mobile-previous').disabled=state.bookPage===0;$('#mobile-next').disabled=state.bookPage===BOOK_SPREADS.length-1;
  if(state.history)$('#mobile-chapter').innerHTML=historyHTML(hist);$('#mobile-read').textContent=state.history?'查看科學史與資料來源 →':'展開完整說明 →';
@@ -231,7 +240,18 @@ function paintVibrationReader(){
  $$('.reader-tabs button').forEach((b,i)=>b.setAttribute('aria-current',String(i===state.chapter)));
 }
 
+function paintDeviceReader(){
+ const ch=CHAPTERS[state.chapter],id=subjectId(),p=sample(state),staticCamera=id==='camera';let content='';
+ if(staticCamera){content='<div class="reader-equation">鏡片 → 固定光圈 → 接環 → 靜態快門組 → 感光元件<br>六片示意鏡片 · 七片光圈葉片 · 無反光鏡架構</div><p>只展示構造、定位與拆解。可切換完整／剖開，旋轉視角或沿拆解滑桿觀察各模組；本頁不計算曝光、對焦或影像品質，也沒有運作動畫。</p>';}
+ else {const q=devicePlot(state,p),speaker=id==='speaker',rows=speaker?[['音圈電流','current'],['振膜位移','displacement'],['電磁推力','force'],['輸入電壓','voltage'],['反電動勢','backEmf'],['音圈發熱','power']]:[['轉子轉速','rpm'],['負載電流','current'],['負載電壓','voltage'],['迎風功率','wind'],['氣動軸功率','shaft'],['電力輸出','power']];
+ const graph='<svg class="reader-wave" viewBox="0 0 610 300" role="img" aria-label="'+q.ylabel+'與'+q.xlabel+'的關係"><path d="M75 35V245H560" fill="none" stroke="#889b73"/>'+q.tracks.map(t=>'<path d="'+t.points.map(([x,y],i)=>(i?'L':'M')+(75+x*470)+','+(245-y*185)).join(' ')+'" fill="none" stroke="'+t.color+'" stroke-width="2"/>').join('')+'<circle id="reader-device-dot" r="5" fill="#4d6840"/><text x="10" y="25">'+q.ylabel+'</text><text x="425" y="285">'+q.xlabel+'</text><text x="15" y="57">'+q.ymax+'</text><text x="75" y="267">'+q.xmin+'</text><text x="520" y="267">'+q.xmax+'</text></svg>';
+ content='<div class="reader-equation">'+rows.map(([name,key])=>name+' <span data-device-live="'+key+'"></span>').join('<br>')+'<br>'+(speaker?'L di/dt = u − Re i − Bl v<br>M dv/dt = Bl i − Rm v − Kx<br>dx/dt = v · P熱 = Re i²':'P風 = ½ρAv³ · P軸 = Cp P風<br>J dω/dt = τ風 − ke I − bω − τ煞<br>e = ke ω · I = e/(Re+RL) · P電 = I²RL')+'</div>'+graph+'<p class="wave-key">'+q.caption+'</p><p>'+(speaker?'原創小訊號集總模型：M=12 g，固有頻率60 Hz，Re=6 Ω，L=0.35 mH，Bl=3.2 N/A，Rm=1.1 N·s/m。Rm合併機械與聲學等效耗散；不代表全部變成熱。時間0.015倍、圖中位移×6；數值維持物理單位，不模擬聲壓或播放音訊。':'原創半徑0.6 m教學風機：ρ=1.225 kg/m³，J=0.18 kg·m²，ke=0.35 V·s/rad，內阻0.7 Ω。氣動Cp採有界示意曲線；發電機採整流後平均等效，不求三相瞬時波形。直驅1:1、固定迎風，時間0.12倍。')+'</p><div class="energy-note">能量收支<small>輸入作功 <span data-device-live="input"></span><br>儲存能量 <span data-device-live="stored"></span><br>'+(speaker?'音圈熱 <span data-device-live="heat"></span><br>機械／聲學耗散 <span data-device-live="loss"></span>':'負載電能 <span data-device-live="energy"></span><br>銅損、軸承與煞車 <span data-device-live="loss"></span>')+'<br>收支殘差 <span data-device-live="balance"></span><br>物理時間 <span data-device-live="time"></span></small></div>';}
+ $('#reader-content').innerHTML='<div class="contents-unit">'+subjectAt(state.chapter).unit+' · 小節 '+(state.chapter+1)+' / '+CHAPTERS.length+'</div><h1 id="reader-title">'+ch.title+'</h1><div class="english">'+ch.subtitle+'</div><p>'+ch.paragraphs.join('</p><p>')+'</p>'+content+'<h2>零件的工作</h2><div class="reader-parts">'+Object.entries(partsFor(state.chapter)).map(([id,q])=>'<button data-part="'+id+'">'+q.title+'</button>').join('')+'</div>'+(state.selected?'<h2>'+PARTS[state.selected].title+'</h2><p>'+PARTS[state.selected].text+'</p>':'');
+ $$('.reader-tabs button').forEach((b,i)=>b.setAttribute('aria-current',String(i===state.chapter)));
+}
+
 function paintReader(){
+ if(isDevice()){paintDeviceReader();return;}
  if(isVibration()){paintVibrationReader();return;}
  if(subjectId()==='governor'||subjectId()==='eddy'){paintBenchReader();return;}
  if(subjectId()==='stirling'){paintThermalReader();return;}
@@ -254,7 +274,7 @@ function paintReader(){
 }
 
 function $$(selector) { return [...document.querySelectorAll(selector)]; }
-$(".reader-tabs").innerHTML = CHAPTERS.map((c, i) => "<button data-chapter='" + i + "'>" + String(i + 1).padStart(2, "0") + " " + (i===0?"發電機 · ":i===4?"熱機 · ":i===8?"調速 · ":i===12?"渦電流 · ":i===16?"阻尼球 · ":i===20?"避震 · ":"") + c.label + "</button>").join("");
+$(".reader-tabs").innerHTML = CHAPTERS.map((c, i) => "<button data-chapter='" + i + "'>" + String(i + 1).padStart(2, "0") + " " + (i===0?"發電機 · ":i===4?"熱機 · ":i===8?"調速 · ":i===12?"渦電流 · ":i===16?"阻尼球 · ":i===20?"避震 · ":i===24?"喇叭 · ":i===28?"風機 · ":i===32?"相機 · ":"") + c.label + "</button>").join("");
 $(".reader-tabs").addEventListener("click", e => { const b = e.target.closest("[data-chapter]"); if(b){const chapter=Number(b.dataset.chapter),next=subjectAt(chapter);if(next.id!==subjectId()||state.history)commitBookPage(SUBJECTS.indexOf(next)*2,true);state.chapter=chapter;paint();} });
 $("#reader-content").addEventListener("click", e => { const b = e.target.closest("[data-part]"); if (b) selectPart(b.dataset.part); });
 $("#read-mode").addEventListener("click", () => { touch(); reader.showModal(); });
@@ -298,16 +318,17 @@ function setExplode(value) {
 $("#explode").addEventListener("click", () => setExplode(state.explodeTarget > 0.55 ? 0 : 1));
 $("#explode-range").addEventListener("input", e => setExplode(Number(e.target.value) / 100));
 function toggleRun() {
-  if(state.turning||state.history)return;
+  if(state.turning||state.history||subjectId()==='camera')return;
   touch(); state.running = !state.running;if(isVibration()&&state.running&&sample(state).halted)vibrationReset(state,subjectId());
   if(subjectId()==='stirling'&&state.running&&Math.abs(state.stOmega)<5)stNudge(state);if(subjectId()==='eddy'&&state.running&&Math.abs(state.eddyOmega)<.15)eddyKick(state);
   if (state.running) { state.popupTarget = 1; state.bookOpenTarget = 1; state.explodeTarget = 0; }
   paint();
 }
 $("#play").addEventListener("click", toggleRun);
-function setParameter(name,value){touch();if(name.startsWith('tmd')||name.startsWith('susp'))vibrationSet(state,name,value);else state[name]=value;paint();}
-for(const id of ['rpm','turns','field','hotC','coldC','brake','govSupply','govLoad','govMass','eddyRpm','eddyField','eddyInsertion','tmdFrequency','tmdTune','tmdDamping','suspFrequency','suspStiffness','suspDamping'])$('#'+id).addEventListener('input',e=>setParameter(id,Number(e.target.value)));
-for(const [id,key] of [['heater','heater'],['section','section'],['brake-release','brakeEngaged'],['load','load'],['field-view','showField'],['chart-toggle','showCharts'],['gov-feedback','govFeedback'],['gov-step','govStep'],['gov-vectors','govVectors'],['eddy-magnet','eddyMagnet']])$('#'+id).addEventListener('click',()=>{touch();state[key]=!state[key];paint();});
+function setParameter(name,value){touch();if(name.startsWith('tmd')||name.startsWith('susp'))vibrationSet(state,name,value);else if(name.startsWith('speaker')||name.startsWith('wind'))deviceSet(state,name,value);else state[name]=value;paint();}
+for(const id of ['rpm','turns','field','hotC','coldC','brake','govSupply','govLoad','govMass','eddyRpm','eddyField','eddyInsertion','tmdFrequency','tmdTune','tmdDamping','suspFrequency','suspStiffness','suspDamping','speakerFrequency','speakerVoltage','speakerField','windSpeed','windPitch','windLoad'])$('#'+id).addEventListener('input',e=>setParameter(id,Number(e.target.value)));
+for(const [id,key] of [['heater','heater'],['section','section'],['brake-release','brakeEngaged'],['load','load'],['field-view','showField'],['chart-toggle','showCharts'],['gov-feedback','govFeedback'],['gov-step','govStep'],['gov-vectors','govVectors'],['eddy-magnet','eddyMagnet'],['speaker-signal','speakerSignal'],['speaker-section','speakerSection'],['wind-enabled','windEnabled'],['wind-connected','windConnected'],['wind-brake','windBrake'],['wind-section','windSection'],['camera-section','cameraSection']])$('#'+id).addEventListener('click',()=>{touch();state[key]=!state[key];paint();});
+$('#speaker-polarity').addEventListener('click',()=>{touch();state.speakerPolarity*=-1;paint();});
 $('#reverse').addEventListener('click',()=>{touch();state.direction*=-1;paint();});$('#polarity').addEventListener('click',()=>{touch();state.polarity*=-1;paint();});
 function changeDisk(key,value){touch();state.running=false;state.manualActive=false;state.eddyOmega=0;state.eddyElapsed=0;state.eddyEnergy={heat:0,bearing:0,input:0};state[key]=value;paint();}
 $('#eddy-slots').addEventListener('click',()=>changeDisk('eddySlots',!state.eddySlots));$('#eddy-material').addEventListener('click',()=>changeDisk('eddyMaterial',state.eddyMaterial==='copper'?'aluminum':'copper'));
@@ -364,7 +385,7 @@ $("#next").addEventListener("click", () => goTo(state.bookPage + 1));
 $(".wordmark").addEventListener("click",e=>{e.preventDefault();$("#book-fold").click();});
 $("#mobile-previous").addEventListener("click",()=>goTo(state.bookPage-1));$("#mobile-next").addEventListener("click",()=>goTo(state.bookPage+1));
 $("#reset").addEventListener("click", () => {
-  touch();const id=subjectId(),defaults={generator:{rpm:40,turns:120,field:.45,direction:1,polarity:1,load:true,showField:true,energy:{load:0,copper:0,input:0}},stirling:{hotC:320,coldC:25,brake:35,heater:true,section:true,brakeEngaged:true,stOmega:0,stEnergy:{gas:0,load:0,friction:0,kick:0}},governor:{govSupply:85,govLoad:12,govMass:180,govFeedback:true,govStep:false,govVectors:true,govOmega:0,govTheta:G_SPEC.thetaMin,govVelocity:0,govEnergy:{load:0,input:0,loss:0}},eddy:{eddyRpm:240,eddyField:.45,eddyInsertion:20,eddyMagnet:true,eddySlots:false,eddyMaterial:'aluminum',eddyOmega:0,eddyElapsed:0,eddyEnergy:{heat:0,bearing:0,input:0}}};if(isVibration()){Object.assign(state,id==='tmd'?{tmdFrequency:.95,tmdTune:95,tmdDamping:14,tmdDrive:true,tmdLocked:false}:{suspFrequency:1.5,suspStiffness:16000,suspDamping:1800,suspRoad:true,suspDamper:true,suspSection:true});vibrationReset(state,id);}Object.assign(state,defaults[id]);state.showCharts=true;state.manualActive=false;state.yawTarget=0;state.zoomTarget=1;state.explodeTarget=0;state.popupTarget=state.history?0:1;state.running=false;state.phase=id==='stirling'?2:.8;state.selected=null;state.flapTarget=0;machine.select(null);setView('book');paint();
+  touch();const id=subjectId(),defaults={generator:{rpm:40,turns:120,field:.45,direction:1,polarity:1,load:true,showField:true,energy:{load:0,copper:0,input:0}},stirling:{hotC:320,coldC:25,brake:35,heater:true,section:true,brakeEngaged:true,stOmega:0,stEnergy:{gas:0,load:0,friction:0,kick:0}},governor:{govSupply:85,govLoad:12,govMass:180,govFeedback:true,govStep:false,govVectors:true,govOmega:0,govTheta:G_SPEC.thetaMin,govVelocity:0,govEnergy:{load:0,input:0,loss:0}},eddy:{eddyRpm:240,eddyField:.45,eddyInsertion:20,eddyMagnet:true,eddySlots:false,eddyMaterial:'aluminum',eddyOmega:0,eddyElapsed:0,eddyEnergy:{heat:0,bearing:0,input:0}}};if(isVibration()){Object.assign(state,id==='tmd'?{tmdFrequency:.95,tmdTune:95,tmdDamping:14,tmdDrive:true,tmdLocked:false}:{suspFrequency:1.5,suspStiffness:16000,suspDamping:1800,suspRoad:true,suspDamper:true,suspSection:true});vibrationReset(state,id);}if(isDevice()){Object.assign(state,id==='speaker'?{speakerFrequency:60,speakerVoltage:1.4,speakerField:100,speakerSignal:true,speakerPolarity:1,speakerSection:true}:id==='wind'?{windSpeed:8,windPitch:0,windLoad:4,windEnabled:true,windConnected:true,windBrake:false,windSection:true}:{cameraSection:true});if(id!=='camera')deviceReset(state,id);}Object.assign(state,defaults[id]);state.showCharts=true;state.manualActive=false;state.yawTarget=0;state.zoomTarget=1;state.explodeTarget=0;state.popupTarget=state.history?0:1;state.running=false;state.phase=id==='stirling'?2:.8;state.selected=null;state.flapTarget=0;machine.select(null);setView('book');paint();
 });
 document.addEventListener("keydown", e => {
   if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName) || reader.open || $("#history-notes").open || contentsDialog.open) return;
@@ -517,7 +538,7 @@ function renderOnce() {
   machine.pose(state);
   machine.root.matrix.multiply(yawMatrix.makeRotationY(state.yaw));
   machine.root.matrixWorldNeedsUpdate = true;
-  book.setOpen(state.open); book.setFlap(state.flap); chart.pose(state);chart.root.visible=!state.history;
+  book.setOpen(state.open); book.setFlap(state.flap); if(subjectId()!=='camera')chart.pose(state);chart.root.visible=chart.root.visible&&!state.history&&subjectId()!=='camera';
   const r = state.cameraRadius, a = state.cameraYaw, e = state.cameraElevation;
   cameraTarget.set(state.targetX, state.targetY, state.targetZ);
   camera.position.set(state.targetX + r * Math.cos(e) * Math.sin(a), state.targetY + r * Math.sin(e), state.targetZ + r * Math.cos(e) * Math.cos(a));
@@ -550,9 +571,9 @@ function frame(now) {
   for (const [key, target] of [["cameraYaw", "cameraYawTarget"], ["cameraElevation", "cameraElevationTarget"], ["cameraRadius", "cameraRadiusTarget"], ["targetX", "targetToX"], ["targetY", "targetToY"], ["targetZ", "targetToZ"]])
     state[key] = reduced ? state[target] : follow(state[key], state[target], dt, camEase);
   if (!state.history && state.running && state.explode < 0.025 && state.popup > 0.98 && !state.turning){
-    if(isVibration()){vibrationAdvance(state,subjectId(),dt*VIBRATION_SPEC.demoScale);if(!state.running&&sample(state).halted){paint();announce(sample(state).halted);}}else if(subjectId()==='governor')govAdvance(state,dt*G_SPEC.demoScale);else if(subjectId()==='eddy')eddyAdvance(state,dt*E_SPEC.demoScale);else if(subjectId()==='stirling')stAdvance(state,dt*ST_SPEC.demoScale);else{const from=state.phase,physicalDt=dt*SPEC.demonstrationScale;state.phase+=state.direction*state.rpm*SPEC.gearRatio/60*Math.PI*2*physicalDt;accumulateEnergy(from,state.phase,physicalDt);}
+    if(subjectId()==='speaker')speakerAdvance(state,dt*SP_SPEC.demoScale);else if(subjectId()==='wind')windAdvance(state,dt*WIND_SPEC.demoScale);else if(subjectId()==='camera')state.running=false;else if(isVibration()){vibrationAdvance(state,subjectId(),dt*VIBRATION_SPEC.demoScale);if(!state.running&&sample(state).halted){paint();announce(sample(state).halted);}}else if(subjectId()==='governor')govAdvance(state,dt*G_SPEC.demoScale);else if(subjectId()==='eddy')eddyAdvance(state,dt*E_SPEC.demoScale);else if(subjectId()==='stirling')stAdvance(state,dt*ST_SPEC.demoScale);else{const from=state.phase,physicalDt=dt*SPEC.demonstrationScale;state.phase+=state.direction*state.rpm*SPEC.gearRatio/60*Math.PI*2*physicalDt;accumulateEnergy(from,state.phase,physicalDt);}
   }
-  if (!reduced && !drag && !state.running && now - state.touchedAt > 18000)
+  if (subjectId()!=='camera' && !reduced && !drag && !state.running && now - state.touchedAt > 18000)
     state.cameraYawTarget = viewProfiles[state.view].yaw + Math.sin((now - state.touchedAt - 18000) / 15000) * 0.035;
   updateTurn(dt);
   const before = performance.now();
@@ -578,7 +599,7 @@ window.__physicsBook = window.__generatorBook = {
   visibleEvidence(){return {machines:Object.fromEntries(Object.entries(machines).map(([id,m])=>[id,m.root.visible])),chart:chart.root.visible,flap:book.flap.visible,bookPage:state.bookPage,history:state.history};},
   clearanceEvidence(){return machine.clearanceEvidence?.()??[];},
   attachmentEvidence(){return machine.attachmentEvidence?.()??[];},
-  get diagnostics() { return { parts: machine.physicalParts.length, renderedFeatures: machine.parts.length, webgl, kinematics: isVibration()?auditVibrations():subjectId()==='governor'?auditGovernor():subjectId()==='eddy'?auditEddy():subjectId()==='stirling'?auditStirling():auditModel(),subject:subjectAt(state.chapter).id, renderer: renderer ? { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles } : null, averageRenderMs: frameTimes.reduce((a, b) => a + b, 0) / Math.max(1, frameTimes.length) }; },
+  get diagnostics() { return { parts: machine.physicalParts.length, renderedFeatures: machine.parts.length, webgl, kinematics: isDevice()?auditDevices():isVibration()?auditVibrations():subjectId()==='governor'?auditGovernor():subjectId()==='eddy'?auditEddy():subjectId()==='stirling'?auditStirling():auditModel(),subject:subjectAt(state.chapter).id, renderer: renderer ? { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles } : null, averageRenderMs: frameTimes.reduce((a, b) => a + b, 0) / Math.max(1, frameTimes.length) }; },
   snapshot() { return { ...state, physics: sample(state) }; }
 };
 applyTheme(); paint(); resize();
