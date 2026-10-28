@@ -1,80 +1,105 @@
-# 物理之書：手搖交流發電機
+# 物理之書：機械與能量
 
-一本可以親手操作的手繪 3D 高中物理課本。發電機從書頁浮出，拖動搖柄即可觀察磁通量、感應電壓、交流週期與電能轉換。
+一本可以拆解、操作、翻閱的手繪 3D 物理實驗書。手搖發電機與史特靈熱機共用同一本實體書、鏡頭、放大鏡、翻頁與即時量測架。
 
-**[線上操作](https://changyi123456.github.io/popup-physics-generator/)** · [離線單檔](dist/index.html) · [授權](LICENSE)
+**[翻開全書](https://changyi123456.github.io/popup-physics-generator/)** · [發電機篇](https://changyi123456.github.io/popup-physics-generator/#generator-1) · [熱機篇](https://changyi123456.github.io/popup-physics-generator/#stirling-1) · [離線單檔](dist/index.html) · [MIT 授權](LICENSE)
 
-![手繪立體發電機、亮燈與即時圓柱量測](assets/preview.png)
+![手繪立體史特靈熱機與即時圓柱量測](assets/preview.png)
 
-## 可以做什麼
+## 同一本書的兩部內容
 
-- 旋轉、拆解與組裝真正的 3D 發電機，探索線圈、磁極、集電環、電刷、軸承與齒輪。
-- 直接拖動立體搖柄，或點書頁上的「自動轉動」。
-- 改變搖柄轉速、線圈匝數、磁場強度；反轉方向、交換磁極及切換負載。
-- 右側書邊的立體量測架朝向裝置，以動態圓柱顯示磁通量 Φ、感應電壓 ε、輸出功率 P；Φ、ε 可跨過零點，P 保持非負。
-- 觀察暖黃色燈泡隨負載功率明暗變化，並讀取送到燈泡的累積電能。
-- 在第三章對照磁通量、電壓與功率的週期；第四章閱讀能量流向。
-- 使用放大鏡、翻頁、掀紙看答案與完整文字讀本。手機提供可讀字級；不支援 WebGL 時保留圖文版。
+第一部「電磁與能量」：手搖發電機的構造、感應、週期、能量，共四個跨頁。
 
-所有表面採一致的手繪紙墨風格，含書本、機械、字體、操作與數據圖。
+第二部「熱與機械」：史特靈熱機的構造、循環、做功、實驗，共四個跨頁。
+
+點書頁頂端的分部索引，或開啟「目錄」跳到指定跨頁。←／→ 可連續翻閱八個跨頁。跨頁前先收回裝置；回到另一部時保留其參數與累積量。新開啟時展示熱機篇，也可用上方網址片段直達指定跨頁，例如 `#stirling-2`。
+
+## 可以親手做什麼
+
+- 所有表面維持紙墨手繪風格：曲面書頁、封面、機械、字體、排線、放大鏡與操作。
+- 右頁直接控制浮起／收回、拆解／組裝、運轉／暫停、條件切換與重設；左頁滑桿調整當前裝置參數。
+- 發電機：拖搖柄、改轉速／匝數／磁場、交換磁極、反轉、切換電阻負載。暖黃色燈泡隨負載功率明暗變化。
+- 熱機：拖飛輪手動探索，或啟動時給一個手推起轉；調整熱端、冷端溫度與煞車負載，切換剖面、加熱與負載釋放。
+- 右側書邊的立體圓柱面向裝置。發電機顯示 Φ、ε、P；熱機顯示 p、V、機械負載功率。底部同步累積輸出能量。
+- 放大鏡可檢視實際書頁和零件；紙上問答可掀開。手機提供可讀文字與原生控制；無 WebGL 時保留各篇結構示意與讀本。
+
+拖空白處環視；Shift 拖曳只旋轉教具；滾輪縮放。「立體數據」同時近看裝置與量測架。原生替代控制都在閱讀模式內。
+
+鍵盤：←／→ 翻頁，Space 運轉／暫停，E 拆解，P 浮出，B 闔書，M 放大鏡，R 重設，Escape 清除選取。熱機暫停會凍結模型時間，保留當時的轉速與量測值。
 
 ## 快速開始
 
-下載專案後，直接以現代瀏覽器開啟 `dist/index.html`。這是約 7 MB 的完整離線單檔，已內嵌 Three.js、完整繁中手寫字型、程式與向量備援圖。
+下載後直接以現代瀏覽器開啟 `dist/index.html`。約 7.3 MB 的離線單檔已內嵌 Three.js、完整繁中手寫字型、程式與兩篇向量備援圖，不需外部資源。
 
-開發只需 Node.js 20 以上與 Python 3，不需 npm 安裝依賴：
+開發需 Node.js 20 以上與 Python 3，不需安裝 npm 依賴：
 
 ```sh
 node build.mjs --audit
 npm run dev
 ```
 
-本機網址為 `http://127.0.0.1:4188/`。GitHub Actions 會在推送 `main` 時重新建置、驗證物理模型並發布至 GitHub Pages。
+本機網址 `http://127.0.0.1:4188/`。推送 `main` 後，GitHub Actions 建置、驗證並部署同一個 GitHub Pages 網址。
 
-## 操作
+## 熱機模型
 
-右頁控制浮出、分解、自動轉動、反向、磁極與負載；左頁滑桿調整參數。拖曳空白處環視，Shift 拖曳只旋轉裝置，滾輪縮放。點「立體數據」可同時近看裝置和圓柱量測架。
+原創雙缸 α 型教學構造：兩顆動力活塞，20 mm 缸徑、18 mm 行程、43 mm 連桿，曲柄相差 90°。活塞位置使用有限長連桿的精確幾何，並直接決定兩氣室體積。
 
-鍵盤：←／→ 翻章，Space 自動轉動，E 分解，P 浮出，B 闔書，M 放大鏡，R 重設，Escape 清除選取。
+工作氣體固定總量；均勻壓力、理想氣體、等溫氣室、理想回熱器。熱源與冷源設定即時生效，沒有暖機模型。
 
-## 物理模型
+```text
+p = nR / (Vh/Th + Vc/Tc + Vr/Tr)
+Tr = (Th − Tc) / ln(Th/Tc)
+Wcycle = ∮ p dV = Wh + Wc
+τgas = (p − patm) dV/dθ
+J dω/dt = τgas − τfriction − τload
+Pload = τload ω
+```
 
-每匝面積 80 cm²；預設 120 匝、0.45 T。60 齒搖柄齒輪帶動 20 齒轉軸齒輪，線圈轉速為搖柄的三倍。自動演示採 0.18 倍時間，讀值仍為物理轉速。
+溫度計算使用 K，體積使用 m³，壓力使用 Pa。書頁與圓柱顯示 kPa、mL、W、J。外部大氣壓在整圈的淨功為零。
+
+轉速由壓力扭矩、摩擦與煞車負載決定；煞車取得的機械功最後轉為熱，沒有接上發電機。飛輪以隱式中點法積分；氣體作功分成負載輸出、摩擦耗散和飛輪動能變化。啟動與手動拖曳包含手部作功。暫停凍結時間；關閉加熱則將兩端設定為等溫，飛輪仍可先消耗原有動能。
+
+等溫與完全回熱假設下的 `1 − Tc/Th` 明確標為**理想效率上限**，不是這個示意裝置的實機效率。未模擬漏氣、有限傳熱、管路壓降及真實暖機。連續曲柄得到平滑 p–V 迴圈，不宣稱實際活塞會按四個理想過程停走。
+
+## 發電機模型
+
+每匝面積 80 cm²，預設 120 匝、0.45 T。60／20 齒增速齒輪讓線圈轉速為搖柄三倍。均勻磁場、4 Ω 線圈、22 Ω 電阻燈泡，忽略電感與機械摩擦。
 
 ```text
 Φ = BA cosθ
 ε = −N dΦ/dt = NBAω sinθ
-I = ε / (R線圈 + R負載)
-P負載 = I² R負載
-E負載 = ∫ P負載 dt
+I = ε / (Rcoil + Rload)
+Pload = I² Rload
+Eload = ∫ Pload dt
 ```
 
-θ 相對固定的左→右方向量起；磁極交換以 B 的正負表示。均勻轉動時，Φ 與 ε 相差四分之一週期，電阻負載功率的週期為 T/2，因此每圈有兩次功率高峰。兩個半週都累積電能。
+Φ 與 ε 相差四分之一週期；電阻負載功率週期為 T/2，兩個半週都累積電能。發電機以 0.18 倍時間、熱機以 0.24 倍時間演示，轉速讀值仍為物理轉速。
 
-線圈電阻固定 4 Ω，燈泡以固定 22 Ω 電阻近似，忽略電感與機械摩擦。可見導線束代表多匝繞組；機械是教學幾何，適合探索原理。
+## 驗證範圍
 
-`node build.mjs --audit` 驗證 2,416 項物理條件與 361 個實際線圈角度／齒輪比例姿態，包括法拉第微分、方向反轉、開路、楞次扭矩及即時與累積能量平衡。這些檢查不等同完整實體碰撞或製造公差驗證。
+`node build.mjs --audit` 驗證發電機 2,416 項條件、熱機 3,614 項條件，以及實際 WebGL 幾何的 361 個線圈／齒輪姿態、721 個雙連桿端點姿態。熱機檢查固定氣體總量、體積導數、定長連桿、每圈能量平衡、等溫零淨功、理想效率上限及飛輪離散能量收支。
 
-## 專案結構
+兩部均為教學幾何。這些檢查不等同全機的掃掠碰撞、製造公差或實機性能驗證。
 
-| 檔案 | 工作 |
-|---|---|
-| `src/model.js` | 物理方程、能量積分、教材與模型驗證 |
-| `src/generator.js` | 發電機、手搖機構、電表與燈泡 |
-| `src/charts.js` | 沿右頁外緣、面向裝置的動態圓柱 |
-| `src/book.js` | 彎曲紙張、印刷控制、週期圖與翻頁 |
-| `src/ink.js` | 手繪排線、紙面明暗與輪廓 |
-| `src/main.js` | 共用狀態、鏡頭與互動 |
-| `src/lens.js` | 實際畫面的放大鏡 |
-| `build.mjs` | 離線打包、向量備援與物理驗證 |
+## 共用架構
 
-## 來源與致謝
+- `src/library.js`：全書目錄、分部、跨頁、零件說明與量測路由。
+- `src/model.js`／`src/generator.js`：發電機物理與實體構造。
+- `src/stirling-model.js`／`src/stirling.js`：熱機熱力學、動力學與實體構造。
+- `src/book.js`：唯一一套曲面紙張、印刷控制、問答紙片與雙向翻頁。
+- `src/charts.js`：共用的右頁折出量測架與動態圓柱。
+- `src/main.js`：共用場景、當前裝置、狀態、鏡頭與手勢。
+- `src/ink.js`／`src/lens.js`：手繪材質與實際畫面放大鏡。
+- `build.mjs`：離線打包、兩篇備援圖與模型／幾何驗證。
 
+## 來源與授權
+
+- [日本海上技術安全研究所：史特靈熱機構造](https://www.nmri.go.jp/archives/eng/khirata/stirling/kiriki/begin/struct.html)
+- [Ohio University：理想等溫分析與限制](https://people.ohio.edu/urieli/stirling/isothermal/isothermal.html)
+- [PHYWE：熱機 p–V、轉速與負載量測](https://www.phywe.com/physics/thermodynamics/temperature-heat/stirling-engine-with-measurelab_11639_12672/)
 - [OpenStax：Electric Generators and Back Emf](https://openstax.org/books/university-physics-volume-2/pages/13-6-electric-generators-and-back-emf)
 - [教育部：高中物理法拉第電磁感應定律](https://market.cloud.edu.tw/resources/web/1812065)
-- 立體書呈現靈感：[Techartist / Every Joule](https://iamtechartist.com/every-joule/)
-- 工藝流程採 Anatomy、Spatial Pop-up Book 與 Mechanical Anatomy Book 的方法；原創教具幾何、互動與教材文字。
 
-## 授權與改作
+立體書呈現靈感來自 [Techartist / Every Joule](https://iamtechartist.com/every-joule/)。沿用 Anatomy、Spatial Pop-up Book 與 Mechanical Anatomy Book 的工藝流程；幾何、互動與教材文字為原創實作。
 
-本專案原創程式與教材採 [MIT License](LICENSE)，歡迎教學使用、分享與改作。Three.js 與 Anatomy 繪圖工具採 MIT；LXGW WenKai TC 字型採 SIL Open Font License。請保留 [第三方授權資訊](THIRD_PARTY_NOTICES.md) 與字型授權。
+原創程式與教材採 [MIT](LICENSE)。Three.js 與 Anatomy 工具採 MIT；LXGW WenKai TC 字型採 SIL OFL。請保留 [第三方授權](THIRD_PARTY_NOTICES.md) 與字型授權。

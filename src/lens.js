@@ -23,7 +23,9 @@ export function createMagnifier({ canvas, getRenderer, getCamera, state, book, r
       else {
         const y = (1 - pageHit.uv.y) * 244;
         key = y > 174 ? 'settings' : y > 105 ? 'physics' : 'chapter';
-        if(key==='settings'){title='一次改變一個條件';explanation='在相同角度比較轉速、匝數或磁場。預測電壓振幅隨 N、B、ω 成正比；頻率由轉速決定。';}
+        if(chapters[state.chapter].subject==='stirling'&&key==='settings'){title='一次改變一個條件';explanation='固定熱端與冷端溫度，只改煞車負載，觀察轉速與機械輸出功率；再固定負載，比較不同溫差。溫度代表理想熱源與冷源設定。';}
+        else if(chapters[state.chapter].subject==='stirling'&&key==='physics'){title='從壓力、體積到機械功';explanation='紙上的 p–V 圈內面積代表每圈氣體淨功。瞬時壓力扭矩可以反向；飛輪暫存能量，輸出分到機械負載與摩擦。理想效率上限不是實機效率。';}
+        else if(key==='settings'){title='一次改變一個條件';explanation='在相同角度比較轉速、匝數或磁場。預測電壓振幅隨 N、B、ω 成正比；頻率由轉速決定。';}
         else if(key==='physics'){title='角度與變化率';explanation='磁通鏈為 NBA cosθ，感應電壓為它的負時間變化率。磁通量最大時，勻速轉動的感應電壓恰為零。';}
         else {title=chapters[state.chapter].title;explanation=chapters[state.chapter].paragraphs[1];}
       }

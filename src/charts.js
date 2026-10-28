@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
-import { sample, smooth, fmt, clamp } from './model.js';
+import { smooth, fmt, clamp } from './model.js';
+import { sample } from './library.js';
 import { paperMaterial, inkEdges } from './ink.js';
 export function createDataCharts(){
  const root=new THREE.Group();root.position.set(198,2.4,0);
@@ -31,21 +32,21 @@ export function createDataCharts(){
   const writeName=label(39,6.5,graph,x,59,1);writeName(['Φ / mWb','ε / V','P / W'][i]);
   const writeValue=label(39,7,graph,x,51,1);
   const writeRange=label(39,4.6,graph,x,10,9);
-  data.push({body,original,cap,writeValue,writeRange,x});
+  data.push({body,original,cap,writeName,writeValue,writeRange,x});
  }
  let visibility=1,lastLabel=0,lastKey='';
  function pose(state){
   visibility+=((state.showCharts===false?0:1)-visibility)*.15;
   const lift=smooth(state.popup??1)*visibility;root.visible=visibility>.002&&(state.open??1)>.015;
   graph.scale.y=.003+.997*smooth(clamp(lift*1.7-.45,0,1));hinge.rotation.z=Math.PI*(1-smooth(clamp(lift*2,0,1)));
-  const p=sample(state),ranges=[7.2,Math.max(6,Math.ceil(p.peak/6)*6),Math.max(1,Math.ceil(p.settingPeakPower))],values=[p.flux*1000,p.emf,p.loadPower];
+  const p=sample(state),thermal=p.subject==='stirling',ranges=thermal?[300,30,Math.max(.5,Math.ceil((p.brakeCoefficient*(p.cycle.work/(Math.PI*2)/(.00065+p.brakeCoefficient))**2*1.7)*2)/2)]:[7.2,Math.max(6,Math.ceil(p.peak/6)*6),Math.max(1,Math.ceil(p.settingPeakPower))],values=thermal?[p.pressure/1000,p.volume*1e6,p.loadPower]:[p.flux*1000,p.emf,p.loadPower];
   for(let i=0;i<3;i++){
    const d=data[i],height=clamp(values[i]/ranges[i],-1,1)*20,length=Math.max(.035,Math.abs(height)),positions=d.body.geometry.attributes.position;
    for(let j=0;j<positions.count;j++)positions.setY(j,d.original[j*3+1]*length);
    positions.needsUpdate=true;d.body.geometry.computeBoundingSphere();d.body.position.y=25+height/2;d.cap.position.y=25+height;
   }
-  const now=typeof performance!=='undefined'?performance.now():0,key=values.map(v=>fmt(v)).join('|')+'|'+fmt(p.energy.load,2)+'|'+ranges.join(',');
-  if(key!==lastKey&&now-lastLabel>90){lastKey=key;lastLabel=now;data.forEach((d,i)=>{d.writeValue((values[i]>0&&i<2?'+':'')+fmt(values[i],i===2?3:2));d.writeRange((i<2?'±':'0–')+ranges[i]+[' mWb',' V',' W'][i]);});foot('累積送到燈泡 E = '+fmt(p.energy.load,3)+' J');}
+  const now=typeof performance!=='undefined'?performance.now():0,key=values.map(v=>fmt(v)).join('|')+'|'+fmt(p.energy.load,2)+'|'+ranges.join(',')+'|'+p.subject;
+  if(key!==lastKey&&now-lastLabel>90){lastKey=key;lastLabel=now;title(thermal?'壓力 · 體積 · 機械輸出':'磁通量 · 電壓 · 電能輸出');legend(thermal?'密閉氣體 · 即時量測 · 輸出為煞車機械功率':'Φ、ε 可正可負；P ≥ 0 · 零點在水平標線');data.forEach((d,i)=>{d.writeName((thermal?['p / kPa','V / mL','P軸 / W']:['Φ / mWb','ε / V','P / W'])[i]);d.writeValue((!thermal&&values[i]>0&&i<2?'+':'')+fmt(values[i],i===2?3:2));d.writeRange((!thermal&&i<2?'±':'0–')+ranges[i]+(thermal?[' kPa',' mL',' W']:[' mWb',' V',' W'])[i]);});foot((thermal?'累積機械輸出 W = ':'累積送到燈泡 E = ')+fmt(p.energy.load,3)+' J');}
  }
  return {root,meshes,pose,get visible(){return root.visible&&visibility>.15;}};
 }

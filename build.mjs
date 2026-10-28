@@ -4,9 +4,11 @@ import { dirname, join } from 'node:path';
 import * as k from './src/vendor/anatomy/iso-kit.mjs';
 import { SPEC, auditModel } from './src/model.js';
 import { createGenerator } from './src/generator.js';
+import { createStirling } from './src/stirling.js';
+import { auditStirling } from './src/stirling-model.js';
 import { Vector3, Quaternion } from './src/vendor/three.module.js';
 const HERE=dirname(fileURLToPath(import.meta.url)),src=p=>join(HERE,'src',p),dist=p=>join(HERE,'dist',p);
-await mkdir(dist('vendor'),{recursive:true});const modelAudit=auditModel();if(!modelAudit.passed)throw new Error(modelAudit.failures.join(', '));
+await mkdir(dist('vendor'),{recursive:true});const modelAudit=auditModel(),stirlingAudit=auditStirling();if(!modelAudit.passed||!stirlingAudit.passed)throw new Error([...modelAudit.failures,...stirlingAudit.failures].join(', '));
 // A matching explanatory SVG remains available on devices without WebGL.
 const P=k.fitProjection([[-70,-65,0],[70,65,0],[-70,65,0],[70,-65,0],[0,0,100]],720,580,{pad:45,azimuth:42,elevation:34}),items=[];
 function slab(name,ring,z,h,style={}){const paths=k.extrude(ring,z,h,P),center=ring.reduce((p,c)=>[p[0]+c[0]/ring.length,p[1]+c[1]/ring.length],[0,0]);items.push({key:k.depthOf([center[0],center[1],z+h/2],P),svg:k.solidSvg(paths,{tone:'hi',...style})});}
@@ -30,15 +32,21 @@ const fields = exportList[1].split(",").map(pair => {
 });
 three = three.slice(0, exportList.index) + "\nconst THREE = Object.freeze({" + fields.join(",") + "});\n";
 const clean = s => s.replace(/^import .+;\n/gm, "").replace(/\bexport\s+(?=const |function |class )/g, "");
-const model = clean(await readFile(src("model.js"), "utf8"));
+const model = 'const GENERATOR_MODEL=(()=>{'+clean(await readFile(src('model.js'),'utf8'))+'\nreturn {SPEC,CHAPTERS,PARTS,sample,energyStep,fmt,smooth,follow,clamp,auditModel,gearProfile};})();\nconst {SPEC,energyStep,fmt,smooth,follow,clamp,auditModel,gearProfile}=GENERATOR_MODEL;';
+const thermalModel='const STIRLING_MODEL=(()=>{'+clean(await readFile(src('stirling-model.js'),'utf8'))+'\nreturn {ST_SPEC,stKinematics,stThermo,stCycle,stSample,stAdvance,stNudge,ST_PARTS,ST_CHAPTERS,auditStirling};})();\nconst {ST_SPEC,stKinematics,stThermo,stCycle,stSample,stAdvance,stNudge,auditStirling}=STIRLING_MODEL;';
+const library='const BOOK_LIBRARY=(()=>{const GEN=GENERATOR_MODEL,ST=STIRLING_MODEL;'+clean(await readFile(src('library.js'),'utf8'))+'\nreturn {CHAPTERS,PARTS,SUBJECTS,subjectAt,partsFor,sample};})();\nconst {CHAPTERS,PARTS,SUBJECTS,subjectAt,partsFor,sample}=BOOK_LIBRARY;';
+const stirling='const createStirling=(()=>{'+clean(await readFile(src('stirling.js'),'utf8'))+'\nreturn createStirling;})();';
 const ink = clean(await readFile(src("ink.js"), "utf8"));
-const generator = "const createGenerator = (() => {\n" + clean(await readFile(src("generator.js"), "utf8")) + "\nreturn createGenerator;\n})();";
+const generator = "const createGenerator = (() => {\nconst {sample}=GENERATOR_MODEL;\n" + clean(await readFile(src("generator.js"), "utf8")) + "\nreturn createGenerator;\n})();";
 const charts = "const createDataCharts = (() => {\n" + clean(await readFile(src("charts.js"), "utf8")) + "\nreturn createDataCharts;\n})();";
 const book = "const createBook = (() => {\n" + clean(await readFile(src("book.js"), "utf8")) + "\nreturn createBook;\n})();";
 const lens = "const createMagnifier = (() => {\n" + clean(await readFile(src("lens.js"), "utf8")) + "\nreturn createMagnifier;\n})();";
 const main = clean(await readFile(src("main.js"), "utf8"));
-const script = three + "\n" + model + "\n" + ink + "\n" + generator + "\n" + charts + "\n" + book + "\n" + lens + "\n(async () => {\n" + main + "\n})().catch(error => { console.error(error); document.body.classList.add('ready'); document.getElementById('fallback').hidden = false; });";
+const script = three + "\n" + model + "\n" + thermalModel + "\n" + library + "\n" + ink + "\n" + stirling + "\n" + generator + "\n" + charts + "\n" + book + "\n" + lens + "\n(async () => {\n" + main + "\n})().catch(error => { console.error(error); document.body.classList.add('ready'); document.getElementById('fallback').hidden = false; });";
+const stirlingSvg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 490" role="img" aria-label="雙缸史特靈熱機剖面"><defs><pattern id="h" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6L6 0" stroke="#687756" opacity=".2"/></pattern></defs><rect width="720" height="490" fill="#f1ecda"/><g stroke="#4c6244" stroke-width="2" stroke-linejoin="round"><path d="M60 421H661L681 442H42Z" fill="#c8d1b3"/><rect x="80" y="132" width="12" height="289" fill="#c0cab3"/><rect x="601" y="132" width="12" height="289" fill="#c0cab3"/><path d="M86 132H610"/><circle cx="158" cy="132" r="82" fill="#bac6aa"/><circle cx="158" cy="132" r="65" fill="#f1ecda"/>${[0,1,2,3,4,5].map(j=>`<path d="M158 132L${158+64*Math.cos(j*Math.PI/3)} ${132+64*Math.sin(j*Math.PI/3)}"/>`).join('')}<circle cx="158" cy="132" r="12" fill="#c5ad76"/><path d="M276 239V387H365V239M465 239V387H554V239" fill="url(#h)" stroke-width="8"/><path d="M276 387H365M465 387H554" stroke="#b58d62" stroke-width="18"/><rect x="281" y="287" width="79" height="19" fill="#d2ad83"/><rect x="470" y="260" width="79" height="19" fill="#a8c4b6"/><path d="M320 297L342 110M509 270L531 154" stroke-width="7"/><path d="M320 132L342 110M509 132L531 154" stroke="#9b7746" stroke-width="9"/><circle cx="342" cy="110" r="7" fill="#c5ad76"/><circle cx="531" cy="154" r="7" fill="#c5ad76"/><path d="M320 381V406H510V381" fill="none" stroke-width="7"/><rect x="395" y="395" width="42" height="22" fill="#d1bd8d"/></g><g font-family="serif" fill="#40533a" text-anchor="middle"><text x="360" y="35" font-size="24">史特靈熱機 · 雙缸 α 型</text><text x="320" y="350" font-size="20">熱端</text><text x="509" y="350" font-size="20">冷端</text><text x="158" y="241" font-size="17">飛輪</text><text x="416" y="467" font-size="17">回熱器與連通管 · 曲柄相差 90°</text></g></svg>`;
+await writeFile(dist('stirling.svg'),stirlingSvg);
 let html = await readFile(src("index.html"), "utf8");
+html=html.replace('GENERATOR_FALLBACK_DATA','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)).replace('STIRLING_FALLBACK_DATA','data:image/svg+xml;charset=utf-8,'+encodeURIComponent(stirlingSvg));
 const font = await readFile(src("fonts/BookHand.woff2"));
 const css = (await readFile(src("style.css"), "utf8")).replace("BOOK_HAND_FONT_DATA", font.toString("base64"));
 html = html.replace("/* APP_CSS */", css);
@@ -50,7 +58,7 @@ html = html.replace("</body>", '<script type="text/plain" id="font-license">' + 
 await writeFile(dist("index.html"), html);
 await writeFile(dist("LICENSES.txt"), projectLicense + "\n\n" + (await readFile(join(HERE, "THIRD_PARTY_NOTICES.md"), "utf8")) + "\n\n" + fontLicense);
 await copyFile(src("vendor/three.module.js"), dist("vendor/three.module.js"));
-await writeFile(join(HERE, "physics-model-audit.json"), JSON.stringify(modelAudit, null, 2) + "\n");
+await writeFile(join(HERE, "physics-model-audit.json"), JSON.stringify({generator:modelAudit,stirling:stirlingAudit}, null, 2) + "\n");
 console.log("Built offline hand-drawn physics textbook · " + (html.length / 1024).toFixed(0) + " KiB · anatomy vector " + items.length + " solids");
 if(process.argv.includes('--audit')){
  const g=createGenerator(),q=new Quaternion(),v=new Vector3();let poseChecks=0;
@@ -65,5 +73,6 @@ if(process.argv.includes('--audit')){
  console.log('Physics audit passed: '+modelAudit.checks+' checks, including Faraday derivatives, field/velocity reversal, open circuit, Lenz torque and energy balance.');
  console.log('Geometry audit passed: '+poseChecks+' coil-normal and external-gear poses; winding-to-pole radial clearance '+clearance.toFixed(2)+' world units.');
  console.log('Generator BOM: '+g.physicalParts.length+' physical components; '+g.parts.length+' rendered features.');
+ const st=createStirling();let stirlingPoses=0,maxAttachmentError=0;for(let i=0;i<=720;i++){st.pose({phase:i*Math.PI/360,popup:1,explode:0});for(const e of st.attachmentEvidence()){maxAttachmentError=Math.max(maxAttachmentError,e.crank,e.piston);if(e.crank>1e-9||e.piston>1e-9)throw new Error('Stirling rod lost actual rendered attachment');}stirlingPoses++;}console.log('Stirling physics audit passed: '+stirlingAudit.checks+' checks; cycle work '+stirlingAudit.cycleWorkJ.toFixed(6)+' J.');console.log('Stirling geometry audit passed: '+stirlingPoses+' actual crank/wrist attachment poses; max error '+maxAttachmentError+'. BOM '+st.physicalParts.length+' physical parts, '+st.parts.length+' rendered features.');st.dispose();
  console.log('Scope: teaching geometry; no full swept-solid or SVG painter-order proof.');g.dispose();
 }

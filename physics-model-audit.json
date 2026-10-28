@@ -1,8 +1,21 @@
 {
-  "passed": true,
-  "failures": [],
-  "checks": 2416,
-  "peakEmf": 5.4286721054031615,
-  "frequency": 1.9999999999999998,
-  "scope": "uniform field, resistive circuit, Faraday derivative, signed motion, energy balance; not manufacturing geometry"
+  "generator": {
+    "passed": true,
+    "failures": [],
+    "checks": 2416,
+    "peakEmf": 5.4286721054031615,
+    "frequency": 1.9999999999999998,
+    "scope": "uniform field, resistive circuit, Faraday derivative, signed motion, energy balance; not manufacturing geometry"
+  },
+  "stirling": {
+    "passed": true,
+    "checks": 3614,
+    "failures": [],
+    "cycleWorkJ": 0.162231036378627,
+    "hotHeatJ": 0.32619437026434606,
+    "idealEfficiencyUpperBound": 0.49734468515552566,
+    "afterFiveSecondsRpm": 197.96068639855022,
+    "energyResidual": -1.9984014443252818e-15,
+    "scope": "exact finite connecting rods, uniform pressure, ideal gas, isothermal spaces, ideal regenerator, midpoint flywheel and brake dynamics; no real engine performance or swept collision guarantee"
+  }
 }
