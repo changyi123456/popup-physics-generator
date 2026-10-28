@@ -101,7 +101,7 @@ try {
   environment();
 } catch (error) {
   webgl = false; document.body.classList.add("no-webgl"); $("#fallback").hidden = false;
-  ["#popup", "#explode", "#play", "#reset", "#explode-range", "#magnify", "#book-fold", "#guide"].forEach(s => $(s).disabled = true);
+  ["#popup", "#explode", "#play", "#reset", "#explode-range", "#magnify", "#book-fold"].forEach(s => $(s).disabled = true);
   $$("[data-view]").forEach(b => b.disabled = true);
   document.body.classList.add("ready"); window.__generatorReady = true; $("#loading").setAttribute("aria-hidden", "true");
 }
@@ -111,8 +111,8 @@ const viewProfiles = {
   charts: {x:145,y:35,z:0,r:390,elevation:.63,yaw:-.62},
   mechanism: { x: 99, y: 44, z: 0, r: 285, elevation: 0.61, yaw: 0.25 }
 };
-let introSkipped = reduced, guideClock = null, guideStep = -1;
-function setView(name, fromGuide = false) {
+let introSkipped = reduced;
+function setView(name) {
   const p = {...viewProfiles[name]}; if (!viewProfiles[name]) return; hideLens();
   if(subjectId()==='stirling'||subjectId()==='governor'){if(name==='mechanism'){p.y=subjectId()==='governor'?65:58;p.r=350;p.yaw=-.55;}if(name==='charts'){p.y=50;p.r=460;p.yaw=-.62;}}if(subjectId()==='eddy'&&name==='mechanism'){p.y=48;p.r=310;p.yaw=.12;}
   state.view = name; state.targetToX = p.x; state.targetToY = p.y; state.targetToZ = p.z;
@@ -125,9 +125,7 @@ function setView(name, fromGuide = false) {
   }
   state.zoomTarget = 1;
   $$("[data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === name)));
-  if (!fromGuide) stopGuide();
 }
-function stopGuide() { guideClock = null; guideStep = -1; $("#guide").setAttribute("aria-pressed", "false"); }
 function resize() {
   const box = $("#scene").getBoundingClientRect(), aspect = box.width / box.height, phone = box.width < 700;
   camera.aspect = aspect;
@@ -158,7 +156,7 @@ function selectPart(part) {
   if (state.selected) setView(state.selected==='measurements'?'charts':'mechanism');
   if (state.selected) announce(PARTS[state.selected].title + "：" + PARTS[state.selected].text);
 }
-function touch() { state.touchedAt = performance.now(); introSkipped = true; stopGuide(); }
+function touch() { state.touchedAt = performance.now(); introSkipped = true; }
 function accumulateEnergy(from,to,seconds){const step=energyStep(state,from,to,seconds);for(const key of ['load','copper','input'])state.energy[key]+=step[key];}
 function liveValues() {
  const p=sample(state);
@@ -172,10 +170,10 @@ function liveValues() {
 }
 function paint() {
  const id=subjectId(),thermal=id==='stirling',bench=id==='governor'||id==='eddy',p=sample(state),ch=CHAPTERS[subjectAt(state.chapter).start],hist=HISTORIES[id];
- $('#scene').setAttribute('aria-label',state.history?hist.kicker+'，純紙面手繪圖與時間軸；拖書角翻頁':'攤開的手繪物理書，'+subjectAt(state.chapter).title+'從右頁立起，旁邊有即時圓柱；拖書角翻頁');document.body.dataset.history=String(state.history);for(const e of $$("[data-view='mechanism'],[data-view='charts'],#guide"))e.disabled=state.history||!webgl;
+ $('#scene').setAttribute('aria-label',state.history?hist.kicker+'，純紙面手繪圖與時間軸；拖書角翻頁':'攤開的手繪物理書，'+subjectAt(state.chapter).title+'從右頁立起，旁邊有即時圓柱；拖書角翻頁');document.body.dataset.history=String(state.history);for(const e of $$("[data-view='mechanism'],[data-view='charts']"))e.disabled=state.history||!webgl;
  document.body.dataset.subject=id;document.title='物理之書 — '+subjectAt(state.chapter).title;
  for(const [key,cls] of Object.entries({generator:'.generator-controls',stirling:'.thermal-controls',governor:'.governor-controls',eddy:'.eddy-controls'}))$$(cls).forEach(e=>e.hidden=key!==id);
- book.draw(state);
+ book.draw(state);paintContents();
  $('#popup').setAttribute('aria-pressed',String(state.popupTarget>.5));$('#popup span').textContent=state.popupTarget>.5?'收回紙面':'浮出圖解';
  $('#explode').setAttribute('aria-pressed',String(state.explodeTarget>.55));$('#explode span').textContent=state.explodeTarget>.55?'組裝':'分解';
  $('#play').setAttribute('aria-pressed',String(state.running));$('#play span').textContent=state.running?'暫停':({generator:'自動轉動',stirling:'啟動熱機',governor:'啟動調速器',eddy:'起轉後放手'})[id];$('#play use').setAttribute('href',state.running?'#i-pause':'#i-play');
@@ -252,10 +250,6 @@ $("#theme-toggle").addEventListener("click", () => {
   applyTheme(); paint();
 });
 $$("[data-view]").forEach(b => b.addEventListener("click", () => { touch(); setView(b.dataset.view); }));
-$("#guide").addEventListener("click", () => {
-  const wasRunning = guideClock !== null; touch();
-  if (!wasRunning) { guideClock = 0; guideStep = -1; state.popupTarget = 1; $("#guide").setAttribute("aria-pressed", "true"); }
-});
 $("#magnify").addEventListener("click", () => {
   touch(); state.lensEnabled = !state.lensEnabled;
   $("#magnify").setAttribute("aria-pressed", String(state.lensEnabled));
@@ -318,6 +312,13 @@ function startTurn(chapter,interactive=false){
  hideLens();$('#part-tip').hidden=true;book.beginTurn(chapter<state.bookPage);paint();return true;
 }
 function goTo(chapter){startTurn(chapter,false);}
+const contentsDialog=$('#contents-dialog');
+$('#contents-list').innerHTML=SUBJECTS.map(subject=>'<section class="contents-part"><div class="contents-unit">'+subject.unit+'</div><h2>'+subject.title+'</h2>'+BOOK_SPREADS.map((spread,page)=>spread.subject===subject.id?'<button data-book-page="'+page+'" aria-label="第 '+(page+1)+' 頁 '+spread.title+'"><span class="contents-page-number">'+String(page+1).padStart(2,'0')+'</span><span>'+(spread.history?'科學史手記':'機械操作')+'</span></button>':'').join('')+'</section>').join('');
+function paintContents(){for(const button of $$('#contents-list [data-book-page]')){if(Number(button.dataset.bookPage)===state.bookPage)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}$('#contents').disabled=state.turning;$('#contents-intro').textContent='目前第 '+String(state.bookPage+1).padStart(2,'0')+' 頁 / '+BOOK_SPREADS.length+' · 點頁碼選取，也可以拖書角翻閱。';}
+$('#contents').addEventListener('click',()=>{if(state.turning)return;touch();hideLens();paintContents();contentsDialog.showModal();$('#contents-list [aria-current="page"]')?.focus();});
+$('#close-contents').addEventListener('click',()=>contentsDialog.close());
+contentsDialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();contentsDialog.close();}});
+contentsDialog.addEventListener('click',e=>{const button=e.target.closest('[data-book-page]');if(button){const page=Number(button.dataset.bookPage);contentsDialog.close();setView('book');if(page===state.bookPage){state.bookOpenTarget=1;state.popupTarget=state.history?0:1;paint();}else goTo(page);canvas.focus();return;}if(e.target===contentsDialog){const r=contentsDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)contentsDialog.close();}});
 function settleTurn(target){if(flip){flip.target=target;flip.interactive=false;}}
 function updateTurn(dt){
  if(!flip)return;const f=flip;
@@ -346,9 +347,10 @@ $("#reset").addEventListener("click", () => {
   touch();const id=subjectId(),defaults={generator:{rpm:40,turns:120,field:.45,direction:1,polarity:1,load:true,showField:true,energy:{load:0,copper:0,input:0}},stirling:{hotC:320,coldC:25,brake:35,heater:true,section:true,brakeEngaged:true,stOmega:0,stEnergy:{gas:0,load:0,friction:0,kick:0}},governor:{govSupply:85,govLoad:12,govMass:180,govFeedback:true,govStep:false,govVectors:true,govOmega:0,govTheta:G_SPEC.thetaMin,govVelocity:0,govEnergy:{load:0,input:0,loss:0}},eddy:{eddyRpm:240,eddyField:.45,eddyInsertion:20,eddyMagnet:true,eddySlots:false,eddyMaterial:'aluminum',eddyOmega:0,eddyElapsed:0,eddyEnergy:{heat:0,bearing:0,input:0}}};Object.assign(state,defaults[id]);state.showCharts=true;state.manualActive=false;state.yawTarget=0;state.zoomTarget=1;state.explodeTarget=0;state.popupTarget=state.history?0:1;state.running=false;state.phase=id==='stirling'?2:.8;state.selected=null;state.flapTarget=0;machine.select(null);setView('book');paint();
 });
 document.addEventListener("keydown", e => {
-  if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName) || reader.open || $("#history-notes").open) return;
+  if (["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName) || reader.open || $("#history-notes").open || contentsDialog.open) return;
   if (e.key === "ArrowRight") { e.preventDefault(); goTo(state.bookPage + 1); }
   if (e.key === "ArrowLeft") { e.preventDefault(); goTo(state.bookPage - 1); }
+  if(e.code==="Space"&&document.activeElement?.matches("button,a"))return;
   if (e.code === "Space") { e.preventDefault(); toggleRun(); }
   if (e.key.toLowerCase() === "e") setExplode(state.explodeTarget > 0.55 ? 0 : 1);
   if (e.key.toLowerCase() === "r") $("#reset").click();
@@ -530,25 +532,8 @@ function frame(now) {
   if (!state.history && state.running && state.explode < 0.025 && state.popup > 0.98 && !state.turning){
     if(subjectId()==='governor')govAdvance(state,dt*G_SPEC.demoScale);else if(subjectId()==='eddy')eddyAdvance(state,dt*E_SPEC.demoScale);else if(subjectId()==='stirling')stAdvance(state,dt*ST_SPEC.demoScale);else{const from=state.phase,physicalDt=dt*SPEC.demonstrationScale;state.phase+=state.direction*state.rpm*SPEC.gearRatio/60*Math.PI*2*physicalDt;accumulateEnergy(from,state.phase,physicalDt);}
   }
-  if (!reduced && !drag && !state.running && guideClock === null && now - state.touchedAt > 18000)
+  if (!reduced && !drag && !state.running && now - state.touchedAt > 18000)
     state.cameraYawTarget = viewProfiles[state.view].yaw + Math.sin((now - state.touchedAt - 18000) / 15000) * 0.035;
-  if (guideClock !== null && !state.history) {
-    guideClock += dt;
-    const steps = subjectId()==='governor'?[{view:'book',explode:0,part:null,running:false,text:'飛球與套筒組成速度感測器'},{view:'mechanism',explode:0,part:'gov_links',running:true,text:'連桿把張角變成套筒升程'},{view:'mechanism',explode:.85,part:'gov_feedback',running:false,text:'拆開止推環與回授撥叉'},{view:'charts',explode:0,part:null,running:true,text:'轉速、升程與動力開度同步變化'},{view:'reading',explode:0,part:null,running:false,text:'回到紙上，設計負載突變實驗'}]:subjectId()==='eddy'?[{view:'book',explode:0,part:null,running:false,text:'無接觸的金屬圓盤煞車'},{view:'mechanism',explode:0,part:'ed_magnet',running:true,text:'局部渦電流反抗轉動'},{view:'mechanism',explode:.85,part:'ed_slots',running:false,text:'拆解圓盤、磁極與滑台'},{view:'charts',explode:0,part:null,running:true,text:'減速的動能累積為熱'},{view:'reading',explode:0,part:null,running:false,text:'比較開槽圓盤，再翻閱這座機械的科學史'}]:subjectId()==='stirling'?[{view:'book',explode:0,part:null,running:false,text:'第二部：溫差驅動的熱機'},{view:'mechanism',explode:0,part:'st_pistons',running:true,text:'兩顆動力活塞，相差九十度'},{view:'mechanism',explode:.85,part:'st_regenerator',running:false,text:'拆開回熱器與傳動機構'},{view:'charts',explode:0,part:null,running:true,text:'同時比較壓力、體積與機械輸出'},{view:'reading',explode:0,part:null,running:false,text:'回到書頁，設計溫差與負載的實驗'}]:[
-      {view:'book',explode:.08,part:null,running:false,text:'從書頁浮出的發電機'},
-      {view:'mechanism',explode:0,part:'coil',running:true,text:'線圈轉動，磁通量正在改變'},
-      {view:'mechanism',explode:.8,part:'rings',running:false,text:'拆開集電環與電刷'},
-      {view:'mechanism',explode:0,part:'lamp',running:true,text:'機械功成為負載的熱與光'},
-      {view:'reading',explode:0,part:null,running:false,text:'回到書頁，比較磁通鏈與電壓'}
-    ];
-    const step = Math.floor(guideClock / 5.5);
-    if (step >= steps.length) stopGuide();
-    else if (step !== guideStep) {
-      guideStep = step; const s = steps[step];
-      state.explodeTarget = s.explode; state.running = s.running;if(subjectId()==='stirling'&&s.running&&Math.abs(state.stOmega)<5)stNudge(state);if(subjectId()==='eddy'&&s.running&&Math.abs(state.eddyOmega)<.15)eddyKick(state); state.selected = s.part;
-      machine.select(s.part); setView(s.view, true); paint(); announce(s.text);
-    }
-  }
   updateTurn(dt);
   const before = performance.now();
   if (webgl) renderOnce();

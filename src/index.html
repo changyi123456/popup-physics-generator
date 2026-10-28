@@ -22,7 +22,6 @@
     <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M5 19 19 5"/></symbol>
     <symbol id="i-lens" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6M7 10h6M10 7v6"/></symbol>
-    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   </defs></svg>
   <header class="masthead">
     <a class="wordmark" href="#" aria-label="物理之書，開啟或闔上封面">物理之書<span>THE BOOK OF PHYSICS</span></a>
@@ -37,13 +36,13 @@
       <canvas id="world" tabindex="0" aria-label="立體物理書：拖動右下或左下書角翻頁；拖空白處環視；方向鍵翻頁；E 拆解；空白鍵運轉"></canvas>
     </div>
     <div class="scene-status" aria-live="polite"><span class="status-dot"></span><span id="status">正在翻開物理課本</span></div>
-    <nav class="view-controls" aria-label="3D 鏡頭">
+    <nav class="view-controls" aria-label="目錄與 3D 鏡頭">
+      <button id="contents" aria-haspopup="dialog" aria-controls="contents-dialog"><svg><use href="#i-book"/></svg>目錄</button>
       <button data-view="book" aria-pressed="true">全書</button>
       <button data-view="reading" aria-pressed="false">閱讀</button>
       <button data-view="mechanism" aria-pressed="false">教具特寫</button>
       <button data-view="charts" aria-pressed="false">立體數據</button>
       <button id="book-fold" aria-pressed="true">闔書</button>
-      <button id="guide" aria-pressed="false"><svg><use href="#i-eye"/></svg>導覽</button>
     </nav>
     <div id="lens" hidden aria-hidden="true"><canvas id="lens-canvas"></canvas><span>2.2×</span></div>
     <aside id="lens-note" hidden aria-live="polite"><span class="note-type">書頁註解</span><strong></strong><p></p><small>點選零件可固定說明</small></aside>
@@ -85,6 +84,13 @@
     </div>
     <section class="mobile-text" aria-label="本章物理說明"><div id="mobile-chapter"></div><button class="text-link" id="mobile-read">展開完整說明 →</button><nav class="mobile-page-nav" aria-label="手機翻頁替代控制"><button id="mobile-previous">← 前一頁</button><span id="mobile-page-label"></span><button id="mobile-next">翻下一頁 →</button></nav></section>
   </main>
+  <dialog id="contents-dialog" aria-labelledby="contents-title" aria-describedby="contents-intro">
+    <button id="close-contents" class="icon-button" aria-label="關閉目錄"><svg><use href="#i-close"/></svg></button>
+    <div class="contents-eyebrow">THE BOOK OF PHYSICS · CONTENTS</div>
+    <h1 id="contents-title">全書目錄</h1>
+    <p id="contents-intro" class="contents-intro">點頁碼選取書頁，也可以拖書角翻閱。</p>
+    <nav id="contents-list" aria-label="選取書頁"></nav>
+  </dialog>
   <button id="history-sources" hidden>科學史資料來源</button>
   <dialog id="history-notes" aria-label="機械科學史與資料來源"><button id="history-close" class="history-close">關閉 ×</button><article id="history-content"></article></dialog>
   <dialog id="reader" aria-labelledby="reader-title">
