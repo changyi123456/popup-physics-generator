@@ -785,7 +785,7 @@ const createTmd=(()=>{function createTmd(){
  }
  box(3,96,3,'steel',floor,'樓層懸掛式尺柱','tmd_frame',64,107,-27);
  const scale=box(8,86,1.4,'paper',floor,'外側樓層／球位移讀值尺','tmd_frame',64,100,-25);for(let j=0;j<16;j++)box(j%4?3:5,.3,.3,'ink',floor,'讀值刻線','tmd_frame',64,61+j*5,-24.1,false);for(const y of [62,139])box(8,2,6,'steel',floor,'刻度尺安裝支架','tmd_frame',60,y,-26);label('SWAY',10,5,floor,63,146,-24,'tmd_frame');
- const lockPin=cyl(1.3,12,'brass',floor,'阻尼球鎖定插銷','tmd_lock',0,146,0);ring(4,1.5,2,'dark',floor,'鎖定插銷座','tmd_lock',0,146,0);
+ const lockPin=cyl(1.3,12,'brass',floor,'阻尼球鎖定插銷','tmd_lock',0,152.5,0);ring(4,1.5,2,'dark',floor,'鎖定插銷座','tmd_lock',0,152.5,0);
  const springKnob=cyl(3.4,5,'brass',floor,'油壓阻尼調節旋鈕','tmd_dampers',61,145,0);for(let j=0;j<12;j++){const a=j*Math.PI/6;cyl(.2,4.5,'dark',springKnob,'旋鈕滾花','tmd_dampers',Math.cos(a)*3.35,0,Math.sin(a)*3.35,'y',false);}
  const datum=new THREE.Group();table.add(datum);label('LENGTH · TUNING',34,5,datum,36,16.1,43,'tmd_cables',true);
  let current=null;
@@ -795,7 +795,7 @@ const createTmd=(()=>{function createTmd(){
   for(const c of cables)c.cable.set([c.x,top,c.z],[c.x+q,ballY+12,c.z]);
   for(const a of anchors){const bottom=restBall-16;a.stand.scale.y=(153-bottom)/70;a.stand.position.y=(153+bottom)/2;}
   for(const d of dampers){const y=restBall-16;d.collar.position.y=y;d.damper.pose([d.sign*60,y,0],[q+d.sign*6,ballY-16,0]);}
-  ram.set([-22.8-baseX,9,0],[-4,9,0]);lockPin.visible=!!state.tmdLocked;lockPin.scale.y=state.tmdLocked?Math.max(1,(146-(ballY+13))/12):1;lockPin.position.y=(146+ballY+13)/2;
+  ram.set([-22.8-baseX,9,0],[-4,9,0]);lockPin.visible=!!state.tmdLocked;lockPin.scale.y=state.tmdLocked?Math.max(1,(152.5-(ballY+13))/12):1;lockPin.position.y=(152.5+ballY+13)/2;
   springKnob.rotation.y=(state.tmdDamping??14)*.1;current={p,q,ballY,length,e};
  }
  function attachmentEvidence(){root.updateMatrixWorld(true);const out=[];for(const c of cables){const a=suspension.localToWorld(new THREE.Vector3(c.x,top,c.z)),b=ball.localToWorld(new THREE.Vector3(c.x,12,c.z));const renderedA=c.cable.mesh.localToWorld(new THREE.Vector3(0,-30,0)),renderedB=c.cable.mesh.localToWorld(new THREE.Vector3(0,30,0));out.push({upperAttachment:renderedA.distanceTo(a),lowerAttachment:renderedB.distanceTo(b),cableLength:a.distanceTo(b)/S,expected:current?.p.length??0,lowerEye:c.eye.getWorldPosition(new THREE.Vector3()).distanceTo(b)});}return out;}
