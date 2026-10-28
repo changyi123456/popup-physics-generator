@@ -38,5 +38,12 @@
     "coefficient": 0.0001535641228958319,
     "overlap": 0.7869315771284224,
     "scope": "low-speed phenomenological eddy damping, exact disk sector inertia and field-patch overlap, analytic energy decay; slot factor illustrative, no field solution or hardware calibration"
+  },
+  "vibrations": {
+    "passed": true,
+    "checks": 10814,
+    "failures": [],
+    "largestResidual": 2.5122126601218042e-12,
+    "scope": "linear two-DOF base excitation, implicit-midpoint work/heat balance, parameter work, small-angle TMD and quarter-car about static preload; stopped at travel/contact limits, no impact/CFD/full building analysis"
   }
 }

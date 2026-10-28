@@ -24,6 +24,7 @@ export function createMagnifier({ canvas, getRenderer, getCamera, state, book, r
         const y = (1 - pageHit.uv.y) * 244;
         key = y > 174 ? 'settings' : y > 105 ? 'physics' : 'chapter';
         if(state.history){title='機械科學史手記';explanation='這一頁以時間軸與概念手繪圖介紹機械的發展。圖稿為原理示意；點右頁下方的史料連結可閱讀來源。';}
+        else if(['tmd','suspension'].includes(chapters[state.chapter].subject)&&(key==='settings'||key==='physics')){const tmd=chapters[state.chapter].subject==='tmd';title=tmd?'調諧與振動能量交換':'彈簧回復，油壓控制回彈';explanation=tmd?'先固定調諧與阻尼，再改振台頻率。比較樓層與球的相對行程，或鎖定歸零重測。小角度模型依相同輸入計算參照與耗散。':'固定路面與彈簧，比較阻尼；再切到平路觀察自由衰減。彈簧儲能，阻尼器耗散；車身加速度、懸吊行程與熱功率同步計算。';}
         else if(chapters[state.chapter].subject==='governor'&&(key==='settings'||key==='physics')){title=key==='settings'?'控制一個實驗條件':'速度如何變成套筒升程';explanation='固定動力與中央質量，切換回授，再突加負載。觀察飛球、套筒、動力開度和轉速如何依序回應。平衡條件與瞬時動態狀態要分開比較。';}
         else if(chapters[state.chapter].subject==='eddy'&&(key==='settings'||key==='physics')){title=key==='settings'?'比較材質、開槽與磁極位置':'制動力矩與發熱';explanation='磁煞車力矩反抗角速度，P熱 = kω² 為非負。開槽會改變電流路徑與慣量；銅、鋁的密度與導電率也不同。更換圓盤會先停轉，再重新起轉比較。';}
         else if(chapters[state.chapter].subject==='stirling'&&key==='settings'){title='一次改變一個條件';explanation='固定熱端與冷端溫度，只改煞車負載，觀察轉速與機械輸出功率；再固定負載，比較不同溫差。溫度代表理想熱源與冷源設定。';}

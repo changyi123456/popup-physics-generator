@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": 3109,
+  "poses": 604,
+  "trials": 99,
+  "limitStops": 1,
+  "maxCableError": 3.268496584496461e-13,
+  "minPistonClearance": 14,
+  "maxResidual": 3.582201202334545e-11,
+  "failures": [],
+  "scope": "native rendered endpoints and piston position, analytic travel/coil/tire limits, driven parameter grid and physics agreement; not a complete swept-solid collision proof"
+}
